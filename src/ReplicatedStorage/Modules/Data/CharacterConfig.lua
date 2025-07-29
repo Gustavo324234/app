@@ -1,0 +1,111 @@
+-- ServerScriptService/Modules/Data/CharacterConfig.lua (MODIFICADO PARA INCLUIR STATS DE HABILIDADES)
+
+local CharacterConfig = {
+	-- Clave principal para el rol de asesino
+	Killer = {
+		["Bacon Hair"] = {
+			Price = 0,
+			Icon = "rbxassetid://75252176542266",
+			OwnedByDefault = true,
+			Weapon = "Sarten",
+			Abilities = { "GreaseTrail", "SizzlingSwing", "FryingFrenzy" },
+			MaxHealth = 120,
+			MaxStamina = 100,
+
+			AttackStats = {
+				Damage = 50,
+				Range = 7,
+				Arc = 90,
+				Cooldown = 1.2
+			}
+		},
+		["Spawnmoon"] = {
+			Price = 5000,
+			Icon = "rbxassetid://132619102920325",
+			OwnedByDefault = false,
+			Abilities = {"DashSlash"},
+			MaxHealth = 120,
+			MaxStamina = 100,
+
+			AttackStats = {
+				Damage = 60,
+				Range = 6,
+				Arc = 75,
+				Cooldown = 1.5
+			}
+		},
+	},
+
+	-- Clave principal para el rol de sobreviviente
+	Survivor = {
+		["Noob"] = {
+			Price = 0,
+			Icon = "rbxassetid://121105201966962",
+			OwnedByDefault = true,
+			Abilities = { "UnbreakableSpirit", "DummyDive", "FinalNoobazo" },
+			MaxHealth = 160,
+			WalkSpeed = 14,
+			MaxStamina = 90,
+
+			AbilityStats = {
+				UnbreakableSpirit = {
+					CheckRadius = 15,
+					DamageReductionTiers = { 0.10, 0.20 }
+				},
+
+				DummyDive = {
+					-- [[ PARÁMETROS DE FÍSICA AÑADIDOS ]]
+					Cooldown = 12,
+					DiveDuration = 0.3,
+					DiveSpeed = 80,
+					PushForce = 3000,
+					SelfStunDuration = 5,--1.5
+
+					-- Planos para los efectos visuales
+					Start = {
+						{ Action = "PlayAnimation", ID = "rbxassetid://102492173585132" }, --102492173585132
+						{ Action = "PlaySound", ID = "rbxassetid://147722227", Parent = "HumanoidRootPart" }
+					},
+					Impact = {
+						{ Action = "PlaySound", ID = "rbxassetid://7171761940", Parent = "HumanoidRootPart" }
+					},
+					Stun = {
+						{ Action = "PlayAnimation", ID = "rbxassetid://507771019", Looped = true, Duration = 5 },--79549688483911
+						{ Action = "PlaySound", ID = "rbxassetid://155288625", Parent = "HumanoidRootPart" }
+					}
+				},
+
+				FinalNoobazo = {
+					-- [[ PARÁMETROS DE LÓGICA AÑADIDOS ]]
+					Cooldown = 100,
+					Duration = 8,
+					HealPerSecond = 5,
+					DamageReduction = 0.30,
+
+					-- Planos para los efectos visuales
+					Start = {
+						{ Action = "SwapModel", ModelName = "Noob_Muscular", Folder = "CharacterModels" },
+						{ Action = "PlayAnimation", ID = "rbxassetid://...Activate_Animation" },
+						{ Action = "PlaySound", ID = "rbxassetid://...Activate_Sound", Looped = true, Name = "UltimateLoopSound", Parent = "HumanoidRootPart" },
+						{ Action = "CreateVFX", ID = "rbxassetid://...Aura_Particle", Looped = true, Name = "UltimateAura", Parent = "HumanoidRootRootPart" }
+					},
+					End = {
+						{ Action = "StopEffects", Names = {"UltimateLoopSound", "UltimateAura"} },
+						{ Action = "RevertModel" }
+					}
+				}
+			}
+		},
+		["Spawnsun"] = {
+			Price = 5000,
+			Icon = "rbxassetid://121105201966962",
+			OwnedByDefault = false,
+			Abilities = {"DashSlash"},
+			MaxHealth = 120,
+			MaxStamina = 100,
+			-- Aquí iría la tabla AbilityStats para Spawnsun en el futuro
+		},
+	}
+}
+
+return CharacterConfig
