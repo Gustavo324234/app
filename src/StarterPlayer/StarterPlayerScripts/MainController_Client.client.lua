@@ -1,4 +1,4 @@
--- StarterPlayer/StarterPlayerScripts/MainController_Client.lua (VERSIÓN FINAL CON LÓGICA RESTAURADA)
+-- StarterPlayer/StarterPlayerScripts/MainController_Client.lua (VERSIÓN FINAL CON LÓGICA RESTAURADA final)
 
 print("--- MainController v17.0 FINAL --- INICIANDO")
 
