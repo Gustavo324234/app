@@ -75,25 +75,36 @@ function AbilityFXController:ProcessEffectBlueprint(character, abilityName, effe
 	-- --- EJECUCIÓN DE ACCIONES (LÓGICA ORIGINAL) ---
 	local player = Players:GetPlayerFromCharacter(character) -- Mantenemos esto por si algún efecto lo necesita.
 
-	for _, actionData in ipairs(effectBlueprint) do
-		local action = actionData.Action
-		local targetPart = actionData.Parent and character:FindFirstChild(actionData.Parent, true) or character.PrimaryPart
+	   for _, actionData in ipairs(effectBlueprint) do
+			   local action = actionData.Action
+			   local targetPart = actionData.Parent and character:FindFirstChild(actionData.Parent, true) or character.PrimaryPart
 
-		if action == "PlayAnimation" then
-			local animateScript = character:FindFirstChild("Animate")
-			if animateScript then
-				local playActionFunc = animateScript:FindFirstChild("PlayActionAnimation")
-				if playActionFunc and playActionFunc:IsA("BindableFunction") then
-					print("[AbilityFXController] ▶ Enviando pausa a Animate para:", character.Name, actionData.ID)
-					-- CAMBIO AQUÍ: Pasar actionData completo como segundo argumento
-					playActionFunc:Invoke(actionData.ID, actionData) 
-				end
-			end
-			
-			-- ▶ Luego sí, reproducimos la animación de la habilidad
-			AnimationController:PlayAnimation(character, actionData.ID)
+			   if action == "PlayAnimation" then
+					   -- Si es una animación de STUN (DummyDive, efectoType == "Stun"), usar PlayActionAnimation para bloquear otras animaciones
+					   if effectType == "Stun" then
+							   local animateScript = character:FindFirstChild("Animate")
+							   if animateScript then
+									   local playActionFunc = animateScript:FindFirstChild("PlayActionAnimation")
+									   if playActionFunc and playActionFunc:IsA("BindableFunction") then
+											   print("[AbilityFXController] ▶ [STUN] Usando PlayActionAnimation para:", character.Name, actionData.ID)
+											   playActionFunc:Invoke(actionData.ID, actionData)
+									   end
+							   end
+							   -- No reproducir ninguna otra animación mientras dura el stun
+					   else
+							   -- Animaciones normales
+							   local animateScript = character:FindFirstChild("Animate")
+							   if animateScript then
+									   local playActionFunc = animateScript:FindFirstChild("PlayActionAnimation")
+									   if playActionFunc and playActionFunc:IsA("BindableFunction") then
+											   print("[AbilityFXController] ▶ Enviando pausa a Animate para:", character.Name, actionData.ID)
+											   playActionFunc:Invoke(actionData.ID, actionData) 
+									   end
+							   end
+							   AnimationController:PlayAnimation(character, actionData.ID)
+					   end
 
-		elseif action == "PlaySound" then
+			   elseif action == "PlaySound" then
 			local sound = Instance.new("Sound", targetPart)
 			sound.SoundId = actionData.ID
 			sound.Looped = actionData.Looped or false
