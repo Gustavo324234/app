@@ -1,8 +1,9 @@
+local MoonsPresence = require(game:GetService("ServerScriptService").Abilities.KillerAbilities.MoonsPresence)
 -- ServerScriptService/Abilities/SurvivorAbilities/UnbreakableSpirit.lua (CORREGIDO)
 
 local UnbreakableSpirit = {}
 
--- [[ CORRECCIÓN: RUTA VERIFICADA ]]
+-- [[ CORRECCIï¿½N: RUTA VERIFICADA ]]
 -- Verificamos que la ruta apunte a ReplicatedStorage.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CharacterConfig = require(ReplicatedStorage.Modules.Data.CharacterConfig)
@@ -13,19 +14,19 @@ UnbreakableSpirit.DisplayName = "Unbreakable Spirit"
 UnbreakableSpirit.Icon = "rbxassetid://119055146121249"
 
 
--- [[ CORRECCIÓN: DECLARAR LOS EVENTOS NECESARIOS ]]
--- Le decimos al AbilityHandler que este módulo necesita estos dos eventos.
+-- [[ CORRECCIï¿½N: DECLARAR LOS EVENTOS NECESARIOS ]]
+-- Le decimos al AbilityHandler que este mï¿½dulo necesita estos dos eventos.
 UnbreakableSpirit.RequiredEvents = {
 	{ Name = "TogglePassiveAbility", Direction = "S_TO_C" },
 	{ Name = "UpdateAbilityUI",      Direction = "S_TO_C" }
 }
 
--- Servicios y Módulos
+-- Servicios y Mï¿½dulos
 local PlayerManager = require(game.ServerScriptService.Modules.PlayerManager)
 
 -- Variables locales
 local activePlayers = {}
-local Events = {} -- Esta tabla ahora será llenada correctamente.
+local Events = {} -- Esta tabla ahora serï¿½ llenada correctamente.
 
 function UnbreakableSpirit.Initialize(eventReferences)
 	Events = eventReferences
@@ -68,12 +69,31 @@ function UnbreakableSpirit.Activate(player)
 				end
 			end
 
+
 			player:SetAttribute("DamageReduction", totalReduction)
+			-- Mostrar el buff en la GUI
+			if totalReduction > 0 then
+				local effectData = {
+					name = "ReducciÃ³n de DaÃ±o",
+					value = string.format("-%d%%", totalReduction * 100),
+					isBuff = true,
+					icon = "rbxassetid://556677"
+				}
+				MoonsPresence:SetEffect(player, effectData, true)
+			else
+				local effectData = {
+					name = "ReducciÃ³n de DaÃ±o",
+					value = "",
+					isBuff = true,
+					icon = "rbxassetid://556677"
+				}
+				MoonsPresence:SetEffect(player, effectData, false)
+			end
 
 			if state.previousStacks ~= nearbyNoobSources then
 				local isActive = nearbyNoobSources > 0
 
-				-- Ahora estas llamadas funcionarán porque Events.TogglePassiveAbility ya no es nil.
+				-- Ahora estas llamadas funcionarï¿½n porque Events.TogglePassiveAbility ya no es nil.
 				if Events.TogglePassiveAbility then
 					Events.TogglePassiveAbility:FireClient(player, UnbreakableSpirit.Name, isActive)
 				end

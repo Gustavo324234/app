@@ -12,6 +12,10 @@ pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, false) en
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
+
+-- Cargar pantallas de carga y estadísticas
+local LoadingScreen = require(game:GetService("StarterGui").LobbyUI.LoadingScreen)
+local RoundStatsScreen = require(game:GetService("StarterGui").LobbyUI.RoundStatsScreen)
 local ClientModules = script.Parent:WaitForChild("ClientModules")
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
 
@@ -21,11 +25,13 @@ local InputController = require(ClientModules.InputController)
 local MovementController = require(ClientModules.MovementController)
 local AbilityController = require(ClientModules.AbilityController)
 local UIController = require(ClientModules.UIController)
+local BuffDebuffDisplay = require(ClientModules.UIModules.BuffDebuffDisplay)
 local AnimationController = require(ClientModules.AnimationController)
 local AbilityFXController = require(ClientModules.AbilityFXController)
 
 -- --- ESTADO ---
 local hasGuiBeenInitialized = false
+local buffDebuffFrame = nil
 
 -- La función de feedback de transparencia no cambia.
 local function applyPressTransparency(button)
@@ -34,7 +40,17 @@ local function applyPressTransparency(button)
 		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
 			originalTransparency = button.ImageTransparency
 			button.ImageTransparency = originalTransparency + 0.3
+		-- Mostrar la lista de buffs/debuffs al iniciar el juego
+		if not buffDebuffFrame then
+			buffDebuffFrame = BuffDebuffDisplay:CreateGui()
 		end
+		-- Ejemplo de efectos iniciales (debes actualizar esto según el estado real del jugador)
+		local exampleEffects = {
+			{name = "Bendición Solar", value = "+30%", isBuff = true, icon = "rbxassetid://123456"},
+			{name = "Pánico", value = "-20%", isBuff = false, icon = "rbxassetid://654321"}
+		}
+		BuffDebuffDisplay:UpdateList(buffDebuffFrame, exampleEffects)
+	end
 	end)
 	button.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -151,6 +167,34 @@ RemoteEvents:WaitForChild("UpdateAbilityUI").OnClientEvent:Connect(function(data
 	end 
 end)
 RemoteEvents:WaitForChild("ShowMessage").OnClientEvent:Connect(function(message, duration) if hasGuiBeenInitialized then UIController:ShowAnnouncement(message, duration) end end)
+
+-- Mostrar pantalla de carga con el nombre del asesino
+local ShowLoadingScreenEvent = RemoteEvents:FindFirstChild("ShowLoadingScreen")
+if ShowLoadingScreenEvent then
+	ShowLoadingScreenEvent.OnClientEvent:Connect(function(killerName)
+		LoadingScreen.SetKillerName(killerName or "?")
+		LoadingScreen.Show()
+	end)
+end
+
+-- Ocultar pantalla de carga (puedes llamar a esto desde el servidor cuando termine la carga)
+RemoteEvents:FindFirstChild("HideLoadingScreen")?.OnClientEvent:Connect(function()
+	LoadingScreen.Hide()
+end)
+
+-- Mostrar pantalla de estadísticas de ronda
+local ShowRoundStatsScreenEvent = RemoteEvents:FindFirstChild("ShowRoundStatsScreen")
+if ShowRoundStatsScreenEvent then
+	ShowRoundStatsScreenEvent.OnClientEvent:Connect(function(statsText)
+		RoundStatsScreen.SetStats(statsText or "")
+		RoundStatsScreen.Show()
+	end)
+end
+
+-- Ocultar pantalla de estadísticas (puedes llamar a esto desde el servidor si quieres forzar el cierre)
+RemoteEvents:FindFirstChild("HideRoundStatsScreen")?.OnClientEvent:Connect(function()
+	RoundStatsScreen.Hide()
+end)
 RemoteEvents:WaitForChild("PlayerAttack").OnClientEvent:Connect(function(animationName)
 	if player.Character then
 		AnimationController:PlayAnimation(player.Character, animationName)

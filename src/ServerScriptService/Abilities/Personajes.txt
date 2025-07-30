@@ -1,0 +1,323 @@
+--------------------------------------------------------------------------------------------------------------
+🧠 FICHA TÉCNICA DE PERSONAJE
+Nombre del Personaje: Bacon Hair
+Tipo: Jugable
+Rol: Asesino
+Arquetipo: Controlador de Área / Especialista en Debilitar
+Estilo de Juego:
+Un asesino territorial que convierte el mapa en una trampa viva. Castiga el posicionamiento descuidado, controla rutas de escape y fuerza al equipo a moverse de forma reactiva. No es veloz, pero sí difícil de evitar.
+
+Arma Principal: Frying Pan (Sartén)
+Descripción del Arma:
+Una sartén oxidada y fusionada a su brazo. Golpea con un sonido metálico denso. Es un ícono de humillación que se volvió su maldición.
+
+📊 ESTADÍSTICAS BÁSICAS
+MaxHealth: 120
+
+MaxStamina: 100
+
+WalkSpeed: 16 (Estándar)
+
+🔥 KIT DE HABILIDADES
+🔸 Passive: Grease Trail (Rastro de Grasa)
+Tipo: Pasiva Toggle (On/Off)
+Descripción para el jugador:
+"Dejas charcos de grasa al moverte. Los sobrevivientes que pisan uno son ralentizados brevemente."
+
+Detalles Técnicos:
+
+Crea charcos pequeños a intervalos regulares mientras se mueve.
+
+Si un sobreviviente pisa un charco, este desaparece.
+
+Debuff: Ralentiza al sobreviviente un 30% (WalkSpeed ×0.7) durante 3 segundos.
+
+Se puede desactivar para moverse sin dejar rastro (modo sigilo).
+
+🔹 Q: Sizzling Swing (Mandoble Chisporroteante)
+Tipo: Activa (Q)
+Descripción para el jugador:
+"Golpea con tu sartén en un arco amplio tras una breve carga. Golpea a todos los que estén frente a ti."
+
+Detalles Técnicos:
+
+Carga de 0.3 segundos antes de golpear.
+
+Área: Cono ancho delante del personaje.
+
+Daño: 100
+
+Cooldown: 8 segundos
+
+🔶 R: Frying Frenzy (Frenesí de Fritura)
+Tipo: Ultimate (R)
+Descripción para el jugador:
+"Entra en un frenesí de locura. Por 10 segundos, tus charcos son más grandes y ralentizan más, y podés atacar más seguido."
+
+Efectos durante 10 segundos:
+
+Grease Trail Mejorado:
+
+Charcos más grandes
+
+Ralentización aumentada a 40% (WalkSpeed ×0.6)
+
+Sizzling Swing Mejorado:
+
+Cooldown reducido a 2.5 segundos
+
+Daño reducido a 40
+
+Cooldown del Ultimate: 90 segundos
+
+🛒 INFORMACIÓN DE LA TIENDA
+Precio en Monedas: 0
+
+¿Se posee por defecto?: Sí
+
+Ícono: [rbxassetid://75252176542266]
+
+--------------------------------------------------------------------------------------------------------
+Ficha Completa – Noob
+1. Información General
+Nombre del Personaje: Noob
+
+Rol: Sobreviviente
+
+Arquetipo: Tanque Defensivo / Protector
+
+Estilo de Juego: Brilla cuando protege a sus compañeros. Absorbe daño, distrae al asesino y crea oportunidades de escape para los demás. Noob es un bastión de corazón puro, ideal para jugadores solidarios que disfrutan estar en el centro del caos para ayudar al equipo.
+
+2. Estadísticas y Atributos
+MaxHealth: 160 (alto para un sobreviviente)
+
+MaxStamina: 90
+
+WalkSpeed: 14 (más lento que el promedio para balancear su resistencia)
+
+Stamina Regen: Moderada
+
+3. Kit de Habilidades
+— HABILIDAD PASIVA: Unbreakable Spirit (Espíritu Inquebrantable)
+Tipo: Pasiva
+Descripción para el jugador: “Recibes menos daño cuando estás cerca de otros sobrevivientes. Cuantos más amigos cerca, más fuerte es tu voluntad.”
+Mecánica Detallada:
+
+Si hay 1 sobreviviente dentro de 10 studs, Noob recibe un 10% menos de daño.
+
+Si hay 2 o más, el bono sube a 20%.
+
+Bonus solo aplica a daño recibido (no ralentizaciones u otros efectos).
+
+— HABILIDAD ACTIVA (Q): Dummy Dive (Clavado Tonto)
+Tipo: Activa (Q)
+Descripción para el jugador: “Noob se lanza torpemente hacia adelante, empujando al asesino levemente y cayendo al suelo. Puede ser usado para proteger a un aliado.”
+Mecánica Detallada:
+
+Al presionar Q, Noob se lanza hacia el frente en línea recta unos 8 studs.
+
+Si impacta al asesino, lo empuja 2 studs hacia atrás y cae al suelo (stun de 1.5 segundos para Noob).
+
+Útil para interponerse entre un asesino y un aliado.
+
+Cooldown: 12 segundos
+
+— ULTIMATE (R): Final Noobazo (Noobazo Final)
+Tipo: Ultimate (R)
+Descripción para el jugador: “Durante unos segundos, Noob canaliza toda su energía interior. Se vuelve musculoso y resistente, ganando inmunidad al retroceso y regeneración de salud.”
+Mecánica Detallada:
+
+Dura 8 segundos.
+
+Al activarse, Noob se vuelve musculoso visualmente.
+
+Durante la duración:
+
+Recibe 30% menos de daño.
+
+Gana 5 de vida por segundo.
+
+Es inmune a empujes, ralentizaciones y stuns.
+
+Cooldown: 100 segundos
+
+4. Información de la Tienda
+Precio en Monedas: 0
+
+¿Se posee por defecto?: Si
+
+Icono (Asset ID): rbxassetid://121105201966962
+
+------------------------------------------------------------------------------------------------------------------
+🌑 Ficha Técnica – Spawnmoon
+Rol: Asesina
+Arquetipo: Terror Psicológico / Presión Mental
+Estilo de Juego: Spawnmoon no persigue: aparece donde menos la esperás. Su fuerza está en infundir miedo, confundir y eliminar con precisión. Verla cerca significa que el peligro ya llegó.
+
+1. 📊 Estadísticas Base
+MaxHealth: 130
+
+MaxStamina: 90
+
+WalkSpeed: 16 (Estándar)
+
+Dificultad: Media
+
+¿Disponible por defecto?: No (Precio: 1200 monedas)
+
+2. 🌘 Habilidad Pasiva – Moon's Presence (Presencia Lunar)
+Descripción para el Jugador:
+"Tu presencia causa ansiedad en los sobrevivientes cercanos, aunque no te vean."
+
+Detalles Técnicos:
+
+Los sobrevivientes dentro de 20 studs comienzan a escuchar susurros y ver efectos visuales leves (pantalla temblorosa, parpadeos).
+
+Si permanecen más de 3 segundos en esa área, reciben un efecto de pánico leve:
+
+La pantalla oscurece un poco, su visión disminuye y no pueden correr por 2 segundos (Stamina bloqueada).
+
+No requiere línea de visión.
+
+3. 🩸 Habilidad Activa (Q) – Gaze of the Forgotten (Mirada de la Olvidada)
+Descripción para el Jugador:
+"Clavá tu mirada en un sobreviviente y desatá el pánico: si te devuelve la vista, lo afecta el terror."
+
+Mecánica:
+
+Seleccionás un sobreviviente a la vista en un cono de 45°.
+
+Si el objetivo te ve directamente dentro de 2 segundos, queda aterrorizado:
+
+Pierde el control de la cámara por 1 segundo.
+
+Corre en dirección contraria involuntariamente durante 1.5 segundos.
+
+No puede usar habilidades por 3 segundos.
+
+Cooldown: 18 segundos.
+
+👁️ El mensaje clave del jugador: “No la mires…”
+
+4. 🌑 Ultimate (R) – Blood Moon (Luna de Sangre)
+Descripción para el Jugador:
+"la luna se vuelve roja, y el ambiente se tiñe, sumiendo el mapa en penumbra. Tus enemigos no pueden verte… pero vos sí a ellos."
+
+Mecánica:
+
+Dura 8 segundos.
+
+Todos los sobrevivientes ven su entorno oscurecido (brillo global reducido en 80%).
+
+Spawnmoon se vuelve casi invisible para ellos (opacidad 30%), pero con un leve parpadeo de silueta.
+
+Puede ver a todos los sobrevivientes marcados a través de paredes (espíritus lunares).
+
+Puede moverse normalmente, no afecta su velocidad.
+
+Cooldown: 100 segundos.
+
+🎮 Visual:la luna se vuelve roja, y el ambiente se tiñe.
+
+5. ⚫ Interacciones Especiales – Spawnsun
+Si Spawnsun está en partida (como sobreviviente), se activan eventos únicos:
+
+Presencia Dolorosa: Spawnsun sufre una desventaja pasiva de -10% en regeneración de Stamina cuando está a menos de 30 studs de Spawnmoon.
+
+Líneas de Voz: Spawnmoon puede emitir frases únicas al verlo (“Te abandoné… y aún estás de pie”), aunque él no entienda por qué.
+
+Final Único: Si Spawnmoon elimina a Spawnsun, se activa un efecto especial:
+
+La cámara de Spawnsun se congela en su rostro mientras se escucha la voz de su hermana por última vez: “No podías recordar... mejor así.”
+
+🛒 Información de Tienda
+Precio: Por definir
+
+Disponibilidad: No se posee por defecto
+
+Dificultad: Media / Alta (recomendado para jugadores que entienden el mapa y les gusta manipular)
+
+Icono: [por definir]
+---------------------------------------------------------------------------------------------------------------------------------------------------
+🌞 Ficha Técnica – Spawnsun
+Rol: Support (Sanador / Mitigador)
+Arquetipo: Curador de Área / Protector
+Estilo de Juego: Spawnsun fortalece a los aliados a través de curación y reducción de daño. Su estilo recompensa el trabajo en equipo y el buen posicionamiento, más que la movilidad o el sigilo.
+
+1. 📊 Estadísticas Base
+MaxHealth: 100
+
+MaxStamina: 120
+
+WalkSpeed: 16
+
+Dificultad: Fácil
+
+¿Disponible por defecto?: No (Precio: 800 monedas)
+
+2. 🌿 Habilidad Pasiva – Radiant Bond (Vínculo Radiante)
+Descripción para el Jugador:
+"Te vinculas con el aliado más cercano. Mientras estén cerca, recibe una curación constante."
+
+Detalles técnicos:
+
+Cada segundo, el aliado más cercano dentro de un rango de 12 studs recibe 5 de curación por segundo, siempre que no haya recibido daño en los últimos 3s.
+
+Solo un aliado puede estar vinculado a la vez.
+
+El vínculo se actualiza automáticamente si alguien más se acerca.
+
+Visual: un hilo dorado tenue conecta a Spawnsun con el aliado curado.
+
+3. 🌞 Habilidad Activa (Q) – Solar Surge (Estallido Solar)
+Descripción para el Jugador:
+"Libera una onda solar que cura a todos los aliados cercanos y les da resistencia temporal al daño."
+
+Detalles técnicos:
+
+Rango: 15 studs.
+
+Cura: 30 HP instantáneamente.
+
+Buff: 20% menos daño recibido durante 4 segundos.
+
+Cooldown: 15 segundos.
+
+Visual: Explosión de luz cálida dorada desde el cetro.
+
+4. 🌅 Ultimate (R) – Sun’s Blessing (Bendición del Sol)
+Descripción para el Jugador:
+"Invoca un aura solar durante 10 segundos que cura y protege a los aliados dentro."
+
+Detalles técnicos:
+
+Aura de 18 studs de radio centrada en Spawnsun.
+
+Cada segundo:
+
+Cura 10 HP a cada aliado dentro.
+
+Otorga 30% de reducción de daño.
+
+Dura 10 segundos.
+
+Cooldown: 90 segundos.
+
+💡 Limitación por duplicados:
+
+Si hay varios Spawnsun en partida, los efectos de curación y reducción de daño no se acumulan.
+
+En cambio, se dividen proporcionalmente:
+
+2 Spawnsun: 5 HP/s y 15% de reducción por cada uno.
+
+3 Spawnsun: ~3.3 HP/s y 10% reducción, etc.
+
+5. 🌑 Interacciones Especiales – Spawnmoon
+Si Spawnmoon está en partida (como asesina), se activan efectos narrativos únicos:
+
+Efectos de voz: Spawnsun escucha una voz familiar que no reconoce (“¿Por qué siento frío cuando ella está cerca?”).
+
+Efecto visual: Si Spawnmoon elimina a Spawnsun, aparece un breve eclipse solar como transición de muerte.
+
+Narrativa interna: Durante la partida, Spawnsun tiene líneas de diálogo interiores que reflejan confusión o ansiedad si Spawnmoon está cerca (aunque no sepa quién es ella).

@@ -11,7 +11,7 @@ local playerGui = player:WaitForChild("PlayerGui")
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
 local AnnounceMessageEvent = RemoteEvents:WaitForChild("AnnounceMessage")
 local UpdateTimerEvent = RemoteEvents:WaitForChild("UpdateTimer")
--- (Aquí añadirías ShowDebuffUIEvent si lo tienes)
+local ShowDebuffUIEvent = RemoteEvents:FindFirstChild("ShowDebuffUI")
 
 local messageLabel, timerLabel
 
@@ -43,7 +43,23 @@ function EffectController:Initialize()
 		end
 	end)
 
-	-- (Aquí conectarías el evento de la UI de debuffs)
+	if ShowDebuffUIEvent then
+		ShowDebuffUIEvent.OnClientEvent:Connect(function(effectsOrName, value, ...)
+			local UIController = require(script.Parent.UIController)
+			local effects = {}
+			if typeof(effectsOrName) == "table" then
+				effects = effectsOrName
+			else
+				-- Compatibilidad: si se envía un solo efecto
+				local isBuff = value and tonumber(value) and tonumber(value) > 0
+				local icon = "rbxassetid://0"
+				effects = {
+					{name = effectsOrName, value = tostring(value), isBuff = isBuff, icon = icon}
+				}
+			end
+			UIController:ShowBuffDebuffList(effects)
+		end)
+	end
 
 	print("[EffectController] Inicializado.")
 end
