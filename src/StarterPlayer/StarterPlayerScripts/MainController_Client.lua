@@ -127,9 +127,18 @@ RemoteEvents:WaitForChild("ApplyState").OnClientEvent:Connect(function(state, du
 		-- Le pasamos la duración al MovementController, y él se encargará
 		-- de detener el stun automáticamente cuando el tiempo termine.
 		MovementController:ApplyLocalStun(duration)
+	elseif state == "Unstunned" then
+		-- Detener manualmente la animación de acción si es necesario
+		if player.Character then
+			local animateScript = player.Character:FindFirstChild("Animate")
+			if animateScript then
+				local stopActionFunc = animateScript:FindFirstChild("StopActionAnimation")
+				if stopActionFunc and stopActionFunc:IsA("BindableFunction") then
+					stopActionFunc:Invoke()
+				end
+			end
+		end
 	end
-	-- Ya no necesitamos el 'elseif state == "Unstunned"' porque el
-	-- MovementController y el CharacterAnimator ahora se autogestionan.
 end)
 RemoteEvents:WaitForChild("UpdateTimer").OnClientEvent:Connect(function(type, value) if hasGuiBeenInitialized then UIController:UpdateTimer(type, value) end end)
 RemoteEvents:WaitForChild("ToggleGameUI").OnClientEvent:Connect(function(isVisible)

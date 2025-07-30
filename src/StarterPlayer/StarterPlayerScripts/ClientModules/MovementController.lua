@@ -60,6 +60,16 @@ function MovementController:ApplyLocalStun(duration)
 	-- No se necesita una función StopLocalStun separada.
 	task.delay(duration, function()
 		isStunned = false
+		-- Detener la animación de acción cuando el stun termine
+		if character then
+			local animateScript = character:FindFirstChild("Animate")
+			if animateScript then
+				local stopActionFunc = animateScript:FindFirstChild("StopActionAnimation")
+				if stopActionFunc and stopActionFunc:IsA("BindableFunction") then
+					stopActionFunc:Invoke()
+				end
+			end
+		end
 	end)
 end
 

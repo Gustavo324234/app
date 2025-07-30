@@ -1,5 +1,7 @@
 -- ServerStorage/Animate.lua 
 
+print("[SUBORDINADO - Animate] Script iniciando para character:", script.Parent and script.Parent.Name or "UNKNOWN")
+
 local Character = script.Parent
 local Humanoid = Character:WaitForChild("Humanoid")
 local pose = "Standing"
@@ -10,39 +12,31 @@ local actionAnimPlaying = false
 ------------------------------------
 local animator = if Humanoid then Humanoid:FindFirstChildOfClass("Animator") else nil
 
--- Función para reproducir una animación externa
-local function playExternalAnimation(animationId)
-	if actionAnimPlaying then return end
-	actionAnimPlaying = true
 
-	if animator then
-		local anim = Instance.new("Animation")
-		anim.AnimationId = animationId
-		local track = animator:LoadAnimation(anim)
-		track.Priority = Enum.AnimationPriority.Action
-		track:Play()
-
-		-- Resetear el estado tras 2 segundos
-		task.delay(2, function()
-			actionAnimPlaying = false
-		end)
-	end
-end
 
 -- BindableFunction para que AbilityFXController invoque animaciones
 local bindable = Instance.new("BindableFunction")
 bindable.Name = "PlayActionAnimation"
-bindable.OnInvoke = function(animationId)
-	playExternalAnimation(animationId)
+bindable.OnInvoke = function(animationId, data)
+	print("[SUBORDINADO - Animate] BindableFunction PlayActionAnimation invocado con:", animationId, "data:", data)
+	playActionAnimation(animationId, data)
 end
 bindable.Parent = script
+print("[SUBORDINADO - Animate] BindableFunction PlayActionAnimation creado y listo.")
+
+-- Variable para almacenar la referencia a la animación de acción actual
+local currentActionTrack = nil
+local currentActionAnimation = nil
 local Players = game:GetService("Players")
 local ClientModules = Players.LocalPlayer.PlayerScripts:WaitForChild("ClientModules")
 local MovementController = require(ClientModules.MovementController)
 local userNoUpdateOnLoopSuccess, userNoUpdateOnLoopValue = pcall(function() return UserSettings():IsUserFeatureEnabled("UserNoUpdateOnLoop") end)
--- ... (TODO el código desde aquí hasta la función "playEmote" se queda EXACTAMENTE IGUAL) ...
--- ... No borres nada de en medio. El código es idéntico al tuyo.
--- Simplemente desplázate hasta el final de la sección "playEmote".
+local userNoUpdateOnLoop = userNoUpdateOnLoopSuccess and userNoUpdateOnLoopValue
+
+-- Variables faltantes
+local userAnimateScaleRunSuccess, userAnimateScaleRunValue = pcall(function() return UserSettings():IsUserFeatureEnabled("UserAnimateScaleRun") end)
+local userAnimateScaleRun = userAnimateScaleRunSuccess and userAnimateScaleRunValue
+local setAngles = false -- Definir según tus necesidades
 
 -- El siguiente código es el tuyo original, hasta la función playEmote
 local function getRigScale()
@@ -290,6 +284,7 @@ local toolTransitionTime = 0.1
 local fallTransitionTime = 0.2
 local currentlyPlayingEmote = false
 function stopAllAnimations()
+	-- No resetear actionAnimPlaying aquí, ya que se maneja en playActionAnimation y stopActionAnimation
 	local oldAnim = currentAnim
 	if (emoteNames[oldAnim] ~= nil and emoteNames[oldAnim] == false) then
 		oldAnim = "idle"
@@ -470,6 +465,11 @@ end
 local function playActionAnimation(animationId, data)
 	print("[SUBORDINADO - Animate] ¡HE RECIBIDO LA ORDEN! Procesando ID:", animationId)
 
+	if not animationId or animationId == "" then
+		warn("[SUBORDINADO - Animate] ¡FALLO! No se proporcionó un ID de animación válido.")
+		return
+	end
+
 	if not Humanoid then 
 		warn("[SUBORDINADO - Animate] ¡FALLO! No tengo referencia al Humanoide.")
 		return 
@@ -500,21 +500,41 @@ local function playActionAnimation(animationId, data)
 	print("[SUBORDINADO - Animate] Animación cargada. Loop:", looped, "Duración:", duration or "auto")
 	track:Play()
 
-	if looped and duration then
-		task.delay(duration, function()
-			if actionAnimPlaying then
-				print("[SUBORDINADO - Animate] Fin de duración manual de animación.")
-				track:Stop()
-				animation:Destroy()
-				actionAnimPlaying = false
-			end
-		end)
-	else
-		track.Ended:Connect(function()
-			print("[SUBORDINADO - Animate] La animación de acción ha terminado (auto).")
+	-- Guardar referencia para poder detenerla manualmente
+	currentActionTrack = track
+	currentActionAnimation = animation
+
+	-- Mejorar el manejo de memory cleanup
+	local function cleanup()
+		if actionAnimPlaying then
 			actionAnimPlaying = false
-			animation:Destroy()
-		end)
+			currentActionTrack = nil
+			currentActionAnimation = nil
+			if animation and animation.Parent then
+				animation:Destroy()
+			end
+		end
+	end
+
+	-- Para animaciones de stun, necesitamos manejar la detención manual
+	-- Las animaciones con loop NO se detienen automáticamente por su duración
+	-- Solo se detienen cuando stopActionAnimation es llamado explícitamente
+	if not looped then
+		track.Ended:Connect(cleanup)
+	end
+end
+
+-- Función para detener manualmente las animaciones de acción
+local function stopActionAnimation()
+	if currentActionTrack then
+		currentActionTrack:Stop()
+		actionAnimPlaying = false
+		currentActionTrack = nil
+		if currentActionAnimation and currentActionAnimation.Parent then
+			currentActionAnimation:Destroy()
+		end
+		currentActionAnimation = nil
+		print("[SUBORDINADO - Animate] Animación de acción detenida manualmente.")
 	end
 end
 -- =============================================================================================
@@ -659,7 +679,7 @@ function stepAnimate(currentTime)
 	-- ==                      [[ SECCIÓN 2: AÑADIR ESTA COMPROBACIÓN AQUÍ ]]                       ==
 	-- =============================================================================================
 	-- Si una animación de acción se está reproduciendo, nos saltamos toda la lógica de este bucle.
-	if MovementController:IsStunned() or actionInProgress then return end
+	if MovementController:IsStunned() then return end
 	if actionAnimPlaying then return end
 	-- =============================================================================================
 	-- ==                               [[ FIN DE LA SECCIÓN 2 ]]                                 ==
@@ -744,11 +764,15 @@ end
 -- =============================================================================================
 -- ==                  [[ SECCIÓN 3: AÑADIR ESTE CÓDIGO AL FINAL DEL SCRIPT ]]                  ==
 -- =============================================================================================
--- Creamos un "puente" (BindableFunction) para que otros scripts puedan llamar a nuestra nueva función.
-local actionBridge = Instance.new("BindableFunction")
-actionBridge.Name = "PlayActionAnimation" -- Le damos un nombre fácil de encontrar
-actionBridge.OnInvoke = playActionAnimation -- La conectamos a nuestra función
-actionBridge.Parent = script
+-- Creamos un BindableFunction para detener animaciones de acción
+local stopActionBridge = Instance.new("BindableFunction")
+stopActionBridge.Name = "StopActionAnimation"
+stopActionBridge.OnInvoke = function()
+	print("[SUBORDINADO - Animate] BindableFunction StopActionAnimation invocado.")
+	stopActionAnimation()
+end
+stopActionBridge.Parent = script
+print("[SUBORDINADO - Animate] BindableFunction StopActionAnimation creado y listo.")
 -- =============================================================================================
 -- ==                               [[ FIN DE LA SECCIÓN 3 ]]                                 ==
 -- =============================================================================================
@@ -756,6 +780,7 @@ actionBridge.Parent = script
 if Character.Parent ~= nil then
 	playAnimation("idle", 0.1, Humanoid)
 	pose = "Standing"
+	print("[SUBORDINADO - Animate] Script completamente inicializado para:", Character.Name)
 end
 while Character.Parent ~= nil do
 	local _, currentGameTime = wait(0.1)

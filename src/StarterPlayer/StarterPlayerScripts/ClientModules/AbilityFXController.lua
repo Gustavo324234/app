@@ -52,6 +52,11 @@ function AbilityFXController:ProcessEffectBlueprint(character, abilityName, effe
 	-- El 'role' y 'charName' ahora vienen como argumentos desde el MainController.
 
 	print("[AbilityFXController] Procesando efecto para:", role, charName, abilityName, effectType)
+	
+	-- Pequeño delay para asegurar que el script Animate se haya inicializado
+	if effectType == "Stun" then
+		task.wait(0.1)
+	end
 
 	-- --- COMPROBACIÓN DE DATOS RECIBIDOS ---
 	if not (role and charName) then
@@ -82,13 +87,40 @@ function AbilityFXController:ProcessEffectBlueprint(character, abilityName, effe
 			   if action == "PlayAnimation" then
 					   -- Si es una animación de STUN (DummyDive, efectoType == "Stun"), usar PlayActionAnimation para bloquear otras animaciones
 					   if effectType == "Stun" then
+							   print("[AbilityFXController] ▶ [STUN] Buscando Animate script en character:", character.Name)
+							   print("[AbilityFXController] ▶ [STUN] Character children:")
+							   for _, child in ipairs(character:GetChildren()) do
+								   print("[AbilityFXController] ▶ [STUN] -", child.Name, "(", child.ClassName, ")")
+							   end
+							   
+							   -- Intentar esperar a que el script Animate se cargue
 							   local animateScript = character:FindFirstChild("Animate")
+							   if not animateScript then
+								   print("[AbilityFXController] ▶ [STUN] Animate script no encontrado, esperando...")
+								   animateScript = character:WaitForChild("Animate", 5) -- Esperar hasta 5 segundos
+								   if animateScript then
+									   print("[AbilityFXController] ▶ [STUN] Animate script encontrado después de esperar")
+								   else
+									   warn("[AbilityFXController] ▶ [STUN] ¡FALLO! Animate script no encontrado después de esperar")
+									   return
+								   end
+							   end
 							   if animateScript then
+									   print("[AbilityFXController] ▶ [STUN] Animate script encontrado para:", character.Name)
+									   print("[AbilityFXController] ▶ [STUN] Animate script children:")
+									   for _, child in ipairs(animateScript:GetChildren()) do
+										   print("[AbilityFXController] ▶ [STUN] --", child.Name, "(", child.ClassName, ")")
+									   end
+									   
 									   local playActionFunc = animateScript:FindFirstChild("PlayActionAnimation")
 									   if playActionFunc and playActionFunc:IsA("BindableFunction") then
 											   print("[AbilityFXController] ▶ [STUN] Usando PlayActionAnimation para:", character.Name, actionData.ID)
 											   playActionFunc:Invoke(actionData.ID, actionData)
+									   else
+											   warn("[AbilityFXController] ▶ [STUN] ¡FALLO! No se encontró PlayActionAnimation BindableFunction para:", character.Name)
 									   end
+							   else
+									   warn("[AbilityFXController] ▶ [STUN] ¡FALLO! No se encontró Animate script para:", character.Name)
 							   end
 							   -- No reproducir ninguna otra animación mientras dura el stun
 					   else
