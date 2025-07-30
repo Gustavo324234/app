@@ -1,3 +1,4 @@
+local MoonsPresence = require(game:GetService("ServerScriptService").Abilities.KillerAbilities.MoonsPresence)
 -- ServerScriptService/Abilities/SurvivorAbilities/FinalNoobazo.lua (CORREGIDO)
 
 local FinalNoobazo = {}
@@ -24,7 +25,7 @@ function FinalNoobazo.GetCooldown(player)
 end
 
 function FinalNoobazo.Execute(player)
-	-- [[ CORRECCIÓN ]] Movemos la lectura de la configuración aquí dentro.
+	-- [[ CORRECCIï¿½N ]] Movemos la lectura de la configuraciï¿½n aquï¿½ dentro.
 	local ABILITY_CONFIG = CharacterConfig.Survivor.Noob.AbilityStats.FinalNoobazo
 
 	if activeUltimates[player] then return false end
@@ -41,12 +42,20 @@ function FinalNoobazo.Execute(player)
 
 	player:SetAttribute("UltimateDamageReduction", ABILITY_CONFIG.DamageReduction)
 	player:SetAttribute("IsImmuneToCC", true)
+	-- Mostrar el buff en la GUI
+	local effectData = {
+		name = "Noobazo Final",
+		value = string.format("-%d%% DaÃ±o", ABILITY_CONFIG.DamageReduction * 100),
+		isBuff = true,
+		icon = "rbxassetid://110288501575260"
+	}
+	MoonsPresence:SetEffect(player, effectData, true)
 
 	local healingCoroutine, deathConnection
 
 	healingCoroutine = task.spawn(function()
 		local timeElapsed = 0
-		-- Ahora ABILITY_CONFIG.Duration ya no será nil.
+		-- Ahora ABILITY_CONFIG.Duration ya no serï¿½ nil.
 		while timeElapsed < ABILITY_CONFIG.Duration and activeUltimates[player] do
 			local deltaTime = task.wait()
 			timeElapsed = timeElapsed + deltaTime
@@ -60,6 +69,14 @@ function FinalNoobazo.Execute(player)
 	end)
 
 	local function cleanup()
+		-- Quitar el buff de la GUI
+		local effectData = {
+			name = "Noobazo Final",
+			value = "",
+			isBuff = true,
+			icon = "rbxassetid://110288501575260"
+		}
+		MoonsPresence:SetEffect(player, effectData, false)
 		if not activeUltimates[player] then return end
 
 		if deathConnection then deathConnection:Disconnect() end
@@ -73,7 +90,7 @@ function FinalNoobazo.Execute(player)
 			player:SetAttribute("UltimateDamageReduction", nil)
 			player:SetAttribute("IsImmuneToCC", nil)
 
-			-- Y esta también funcionará.
+			-- Y esta tambiï¿½n funcionarï¿½.
 			if Events.AbilityUsed and formerCharacter then
 				Events.AbilityUsed:FireAllClients(formerCharacter, FinalNoobazo.Name, "End")
 			end

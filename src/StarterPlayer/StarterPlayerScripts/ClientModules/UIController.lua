@@ -9,6 +9,14 @@ local UIModules = ClientModulesFolder:WaitForChild("UIModules")
 local StatusDisplay = require(UIModules.StatusDisplay)
 local RoundInfoDisplay = require(UIModules.RoundInfoDisplay)
 local AbilityDisplay = require(UIModules.AbilityDisplay)
+local BuffDebuffDisplay = require(UIModules.BuffDebuffDisplay)
+local buffDebuffFrame = nil
+function UIController:ShowBuffDebuffList(effects)
+	if not buffDebuffFrame then
+		buffDebuffFrame = BuffDebuffDisplay:CreateGui()
+	end
+	BuffDebuffDisplay:UpdateList(buffDebuffFrame, effects or {})
+end
 
 -- --- FUNCIONES PÚBLICAS (PASA-PLATOS) ---
 

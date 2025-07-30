@@ -1,4 +1,4 @@
--- ServerScriptService/Core/GameManager.lua (VERSIÓN FINAL Y LIMPIA)
+-- ServerScriptService/Core/GameManager.lua (VERSIï¿½N FINAL Y LIMPIA)
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,7 +8,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local SetupManager = require(ServerScriptService.Modules.SetupManager)
 SetupManager.Initialize()
 
--- 2. Se cargan los módulos
+-- 2. Se cargan los mï¿½dulos
 local PlayerManager = require(ServerScriptService.Modules.PlayerManager)
 local MapManager = require(ServerScriptService.Modules.MapManager)
 local RewardManager = require(ServerScriptService.Modules.RewardManager)
@@ -16,7 +16,7 @@ local MessageManager = require(ServerScriptService.Modules.MessageManager)
 local AbilityHandler = require(ServerScriptService.Handlers.AbilityHandler)
 local ActionHandler = require(ServerScriptService.Handlers.ActionHandler) -- << Se carga el ActionHandler
 
--- 3. Se inicializan los módulos que dependen del entorno
+-- 3. Se inicializan los mï¿½dulos que dependen del entorno
 PlayerManager.Initialize()
 AbilityHandler.Initialize()
 ActionHandler.Initialize() -- << Se inicializa el ActionHandler
@@ -29,8 +29,10 @@ local ExitSpectatorModeEvent = RemoteEvents:WaitForChild("ExitSpectatorMode")
 local PlayerDiedEvent = RemoteEvents:WaitForChild("PlayerDied")
 local ToggleGameUIEvent = RemoteEvents:WaitForChild("ToggleGameUI")
 local ToggleLobbyUIEvent = RemoteEvents:WaitForChild("ToggleLobbyUI")
+local ShowLoadingScreenEvent = RemoteEvents:FindFirstChild("ShowLoadingScreen")
+local ShowRoundStatsScreenEvent = RemoteEvents:FindFirstChild("ShowRoundStatsScreen")
 
--- Configuración (sin cambios)
+-- Configuraciï¿½n (sin cambios)
 local ROUND_DURATION = 240
 local INTERMISSION_DURATION = 15
 local currentMap = nil
@@ -55,22 +57,32 @@ local function startRound(playersInRound, realPlayers)
 
 	currentMap = MapManager.LoadRandomMap()
 	if not currentMap then
-		warn("? No se pudo cargar ningún mapa.")
+		warn("? No se pudo cargar ningï¿½n mapa.")
 		return
 	end
 
 	-- 1. PlayerManager se encarga de TODO: decidir roles y crear un bot si es necesario.
 	local killer, survivors = PlayerManager.AssignRoles(realPlayers)
 
-	-- 2. Comprobación de seguridad crucial.
+	-- Mostrar pantalla de carga a todos los jugadores con el nombre del asesino
+	if ShowLoadingScreenEvent and killer and killer:IsA("Player") then
+		for _, p in ipairs(realPlayers) do
+			ShowLoadingScreenEvent:FireClient(p, killer.Name)
+		end
+	end
+
+	-- 2. Comprobaciï¿½n de seguridad crucial.
 	if not killer or #survivors == 0 then
-		warn("---[ FALLO EN ASIGNACIÓN DE ROLES ]--- No hay suficientes participantes. Abortando la ronda.")
+		warn("---[ FALLO EN ASIGNACIï¿½N DE ROLES ]--- No hay suficientes participantes. Abortando la ronda.")
 		cleanupMap()
 		PlayerManager.Reset()
 		PlayerManager.ReturnPlayersToLobby(realPlayers)
 		roundActive = false
 		return
 	end
+
+	-- Esperar un poco para simular carga (puedes ajustar el tiempo)
+	task.wait(2)
 
 	-- 3. Asignamos los personajes a los JUGADORES REALES.
 	if killer:IsA("Player") then
@@ -90,7 +102,15 @@ local function startRound(playersInRound, realPlayers)
 	-- 5. Teletransportamos a todos (jugadores y bots).
 	PlayerManager.TeleportPlayersToMap(currentMap, killer, survivors)
 
-	-- [[ LÓGICA RESTAURADA: PARTE 1 - INICIO DE RONDA ]]
+	-- Ocultar pantalla de carga
+	local HideLoadingScreenEvent = RemoteEvents:FindFirstChild("HideLoadingScreen")
+	if HideLoadingScreenEvent then
+		for _, p in ipairs(realPlayers) do
+			HideLoadingScreenEvent:FireClient(p)
+		end
+	end
+
+	-- [[ Lï¿½GICA RESTAURADA: PARTE 1 - INICIO DE RONDA ]]
 	-- Gestionamos la UI y los eventos de muerte para todos los participantes.
 	for _, p in ipairs(playersInRound) do
 		if p:IsA("Player") then 
@@ -118,7 +138,7 @@ local function startRound(playersInRound, realPlayers)
 	end
 	AnnounceMessage:FireAllClients("The round has started!")
 
-	-- [[ LÓGICA RESTAURADA: PARTE 2 - BUCLE PRINCIPAL DE LA RONDA ]]
+	-- [[ Lï¿½GICA RESTAURADA: PARTE 2 - BUCLE PRINCIPAL DE LA RONDA ]]
 	local timeLeft = ROUND_DURATION
 	local roundEnded = false
 	local killerWon = false
@@ -133,9 +153,33 @@ local function startRound(playersInRound, realPlayers)
 		end
 	end
 
-	-- [[ LÓGICA RESTAURADA: PARTE 3 - FINAL Y LIMPIEZA DE LA RONDA ]]
+	-- [[ Lï¿½GICA RESTAURADA: PARTE 3 - FINAL Y LIMPIEZA DE LA RONDA ]]
 	RewardManager.GiveRewards(killer, survivors, killerWon)
 	PlayerManager.AwardSurvivorBeats(survivors)
+
+	-- Mostrar pantalla de estadÃ­sticas de ronda a todos los jugadores
+	if ShowRoundStatsScreenEvent then
+		local statsText = ""
+		if killerWon then
+			statsText = "Â¡El asesino ganÃ³!\n"
+		else
+			statsText = "Â¡Los sobrevivientes ganaron!\n"
+		end
+		statsText = statsText .. "\nEstadÃ­sticas de la ronda:\n"
+		statsText = statsText .. "Asesino: " .. (killer.Name or "?") .. "\n"
+		statsText = statsText .. "Sobrevivientes: " .. table.concat((function() local t = {} for _,s in ipairs(survivors) do table.insert(t, s.Name) end return t end)(), ", ") .. "\n"
+		-- Puedes agregar mÃ¡s estadÃ­sticas aquÃ­
+		for _, p in ipairs(realPlayers) do
+			ShowRoundStatsScreenEvent:FireClient(p, statsText)
+		end
+	end
+	task.wait(6)
+	local HideRoundStatsScreenEvent = RemoteEvents:FindFirstChild("HideRoundStatsScreen")
+	if HideRoundStatsScreenEvent then
+		for _, p in ipairs(realPlayers) do
+			HideRoundStatsScreenEvent:FireClient(p)
+		end
+	end
 	if killerWon then
 		AnnounceMessage:FireAllClients("The Killer won!")
 		if killer:GetAttribute("IsBot") then killer:SetAttribute("GanoRonda", true) end

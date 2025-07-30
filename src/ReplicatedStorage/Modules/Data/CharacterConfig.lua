@@ -20,13 +20,34 @@ local CharacterConfig = {
 			}
 		},
 		["Spawnmoon"] = {
-			Price = 5000,
+			Price = 1200,
 			Icon = "rbxassetid://132619102920325",
 			OwnedByDefault = false,
-			Abilities = {"DashSlash"},
-			MaxHealth = 120,
-			MaxStamina = 100,
-
+			Abilities = {"MoonsPresence", "GazeOfTheForgotten", "BloodMoon"},
+			MaxHealth = 130,
+			MaxStamina = 90,
+			WalkSpeed = 16,
+			AbilityStats = {
+				MoonsPresence = {
+					PanicRadius = 20,
+					PanicTime = 3,
+					StaminaBlockTime = 2
+				},
+				GazeOfTheForgotten = {
+					Cooldown = 18,
+					ConeAngle = 45,
+					TerrorDuration = 3,
+					CameraLoss = 1,
+					ForcedRun = 1.5,
+					AbilityBlock = 3
+				},
+				BloodMoon = {
+					Cooldown = 100,
+					Duration = 8,
+					Opacity = 0.3,
+					VisionReduction = 0.8
+				}
+			},
 			AttackStats = {
 				Damage = 60,
 				Range = 6,
@@ -97,13 +118,34 @@ local CharacterConfig = {
 			}
 		},
 		["Spawnsun"] = {
-			Price = 5000,
+			Price = 800,
 			Icon = "rbxassetid://121105201966962",
 			OwnedByDefault = false,
-			Abilities = {"DashSlash"},
-			MaxHealth = 120,
-			MaxStamina = 100,
-			-- Aquí iría la tabla AbilityStats para Spawnsun en el futuro
+			Abilities = {"RadiantBond", "SolarSurge", "SunsBlessing"},
+			MaxHealth = 100,
+			MaxStamina = 120,
+			WalkSpeed = 16,
+			AbilityStats = {
+				RadiantBond = {
+					HealPerSecond = 5,
+					Range = 12,
+					NoDamageTime = 3
+				},
+				SolarSurge = {
+					Cooldown = 15,
+					Heal = 30,
+					BuffReduction = 0.2,
+					BuffDuration = 4,
+					Range = 15
+				},
+				SunsBlessing = {
+					Cooldown = 90,
+					Duration = 10,
+					HealPerSecond = 10,
+					Reduction = 0.3,
+					Radius = 18
+				}
+			}
 		},
 	}
 }
