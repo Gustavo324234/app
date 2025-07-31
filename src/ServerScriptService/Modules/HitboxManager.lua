@@ -1,9 +1,9 @@
--- ServerScriptService/Modules/HitboxManager.lua (SOLO DETECCIÓN)
+-- ServerScriptService/Modules/HitboxManager.lua (SOLO DETECCIï¿½N)
 
 local HitboxManager = {}
 
 function HitboxManager.GetHitsInBox(params)
-	-- Parámetros: Attacker, HitboxCFrame, HitboxSize
+	-- Parï¿½metros: Attacker, HitboxCFrame, HitboxSize
 
 	local overlapParams = OverlapParams.new()
 	overlapParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -29,7 +29,7 @@ function HitboxManager.GetHitsInBox(params)
 end
 
 function HitboxManager.GetHitsInCone(params)
-	-- Parámetros: Attacker, Targets, Range, Arc
+	-- Parï¿½metros: Attacker, Targets, Range, Arc
 
 	local hrp = params.Attacker:FindFirstChild("HumanoidRootPart")
 	if not hrp then return {} end

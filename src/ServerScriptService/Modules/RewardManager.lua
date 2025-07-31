@@ -1,15 +1,15 @@
--- ServerScriptService/Modules/RewardManager.lua (VERSIÓN MEJORADA)
+-- ServerScriptService/Modules/RewardManager.lua (VERSIï¿½N MEJORADA)
 
 local ServerScriptService = game:GetService("ServerScriptService")
 
--- Módulos necesarios
+-- Mï¿½dulos necesarios
 local GameStatsManager = require(ServerScriptService.Modules.Data.GameStatsManager)
 local MessageManager = require(ServerScriptService.Modules.MessageManager) -- Para enviar mensajes al jugador
-local PlayerManager = require(ServerScriptService.Modules.PlayerManager) -- Para saber quién está vivo
+local PlayerManager = require(ServerScriptService.Modules.PlayerManager) -- Para saber quiï¿½n estï¿½ vivo
 
 local RewardManager = {}
 
--- Tabla de recompensas más detallada
+-- Tabla de recompensas mï¿½s detallada
 local RECOMPENSAS = {
 	KillerWin = { Coins = 100, KillerWins = 1 },
 	SurvivorWin = { Coins = 50, SurvivorWins = 1 },
@@ -22,13 +22,13 @@ function RewardManager.GiveRewards(killer, survivors, killerWon)
 		if killerWon then
 			--print("Rewarding", killer.Name, "for WINNING as Killer.")
 			GameStatsManager.AddStats(killer, RECOMPENSAS.KillerWin)
-			-- Mensaje en inglés
+			-- Mensaje en inglï¿½s
 			MessageManager.SendToPlayer(killer, "?? Victory! +" .. RECOMPENSAS.KillerWin.Coins .. " Coins.")
 		else
 			-- If the killer loses, they get a participation reward
 			--print("Rewarding", killer.Name, "for PARTICIPATING as Killer.")
 			GameStatsManager.AddStats(killer, RECOMPENSAS.Participation)
-			-- Mensaje en inglés
+			-- Mensaje en inglï¿½s
 			MessageManager.SendToPlayer(killer, "?? Participation: +" .. RECOMPENSAS.Participation.Coins .. " Coins.")
 		end
 	end
@@ -40,7 +40,7 @@ function RewardManager.GiveRewards(killer, survivors, killerWon)
 				-- The killer won, survivors only get a participation reward
 				--print("Rewarding", survivor.Name, "for PARTICIPATING as Survivor.")
 				GameStatsManager.AddStats(survivor, RECOMPENSAS.Participation)
-				-- Mensaje en inglés
+				-- Mensaje en inglï¿½s
 				MessageManager.SendToPlayer(survivor, "?? Participation: +" .. RECOMPENSAS.Participation.Coins .. " Coins.")
 			else
 				-- The survivors won.
@@ -48,13 +48,13 @@ function RewardManager.GiveRewards(killer, survivors, killerWon)
 				if PlayerManager.IsEntityAlive(survivor) then
 					--print("Rewarding", survivor.Name, "for SURVIVING and WINNING.")
 					GameStatsManager.AddStats(survivor, RECOMPENSAS.SurvivorWin)
-					-- Mensaje en inglés
+					-- Mensaje en inglï¿½s
 					MessageManager.SendToPlayer(survivor, "?? You survived! +" .. RECOMPENSAS.SurvivorWin.Coins .. " Coins.")
 				else
 					-- Those who died but their team won get a participation reward
 					--print("Rewarding", survivor.Name, "for PARTICIPATING (died but team won).")
 					GameStatsManager.AddStats(survivor, RECOMPENSAS.Participation)
-					-- Mensaje en inglés
+					-- Mensaje en inglï¿½s
 					MessageManager.SendToPlayer(survivor, "?? Participation: +" .. RECOMPENSAS.Participation.Coins .. " Coins.")
 				end
 			end

@@ -13,16 +13,16 @@ local DURATION = 10
 
 -- La habilidad ahora recibe la tabla de modificadores del jugador
 function FryingFrenzy.Execute(player, modifiers)
-	-- Prevenir doble activación
+	-- Prevenir doble activaciï¿½n
 	if modifiers.FryingFrenzy_Active then return false end
 
-	print(player.Name, "ha activado ¡Frying Frenzy!")
+	print(player.Name, "ha activado ï¿½Frying Frenzy!")
 
 	-- 1. Aplicamos los modificadores al perfil del jugador
 	modifiers.FryingFrenzy_Active = true
-	modifiers.GreaseTrail_Enhanced = true -- GreaseTrail buscará este modificador
-	modifiers.SizzlingSwing_Damage = 40    -- SizzlingSwing buscará este modificador
-	modifiers.SizzlingSwing_Cooldown = 2.5 -- SizzlingSwing buscará este modificador
+	modifiers.GreaseTrail_Enhanced = true -- GreaseTrail buscarï¿½ este modificador
+	modifiers.SizzlingSwing_Damage = 40    -- SizzlingSwing buscarï¿½ este modificador
+	modifiers.SizzlingSwing_Cooldown = 2.5 -- SizzlingSwing buscarï¿½ este modificador
 
 	-- 2. Programamos la limpieza de los modificadores
 	task.delay(DURATION, function()

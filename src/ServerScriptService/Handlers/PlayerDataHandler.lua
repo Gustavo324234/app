@@ -1,17 +1,17 @@
--- ServerScriptService/Handlers/PlayerDataHandler.lua (VERSIÓN FINAL CON GUARDADO DE BEATS)
+-- ServerScriptService/Handlers/PlayerDataHandler.lua (VERSIï¿½N FINAL CON GUARDADO DE BEATS)
 
--- --- SERVICIOS Y MÓDULOS ---
+-- --- SERVICIOS Y Mï¿½DULOS ---
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local RunService = game:GetService("RunService")
-local DataStoreService = game:GetService("DataStoreService") -- <<-- AÑADIDO
+local DataStoreService = game:GetService("DataStoreService") -- <<-- Aï¿½ADIDO
 
 local GameStatsManager = require(ServerScriptService.Modules.Data.GameStatsManager)
 local PersonajeManager = require(ServerScriptService.Modules.Data.PersonajeManager)
 local CharacterConfig = require(game.ReplicatedStorage.Modules.Data.CharacterConfig)
 
--- [[ AÑADIDO: DATASTORE PARA BEATS ]]
+-- [[ Aï¿½ADIDO: DATASTORE PARA BEATS ]]
 local beatsDataStore = DataStoreService:GetDataStore("PlayerBeatsData_V1")
 
 -- --- REMOTES ---
@@ -22,7 +22,7 @@ local obtenerPersonajesFunc = RemoteFunctions:WaitForChild("ObtenerPersonajes")
 local ComprarPersonaje = RemoteEvents:WaitForChild("ComprarPersonaje")
 local RefreshShopEvent = RemoteEvents:WaitForChild("RefreshShop")
 
--- --- CONFIGURACIÓN INICIAL DEL JUEGO ---
+-- --- CONFIGURACIï¿½N INICIAL DEL JUEGO ---
 Players.CharacterAutoLoads = false
 
 -- --- FUNCIONES PRINCIPALES ---
@@ -45,11 +45,11 @@ local function setupPlayer(player)
 	inLobby.Value = true
 	inLobby.Parent = player
 
-	-- Cargar datos (esto ya lo tenías y está bien)
+	-- Cargar datos (esto ya lo tenï¿½as y estï¿½ bien)
 	GameStatsManager.Load(player)
 	PersonajeManager.Load(player)
 
-	-- [[ AÑADIDO: LÓGICA PARA CARGAR BEATS ]]
+	-- [[ Aï¿½ADIDO: Lï¿½GICA PARA CARGAR BEATS ]]
 	task.spawn(function()
 		local success, savedBeats = pcall(function()
 			return beatsDataStore:GetAsync("Player_" .. player.UserId)
@@ -72,7 +72,7 @@ local function setupPlayer(player)
 end
 
 local function cleanupPlayer(player)
-	-- [[ AÑADIDO: LÓGICA PARA GUARDAR BEATS ]]
+	-- [[ Aï¿½ADIDO: Lï¿½GICA PARA GUARDAR BEATS ]]
 	if player and player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Remaining Beats") then
 		local beatsToSave = player.leaderstats["Remaining Beats"].Value
 		local success, err = pcall(function()
@@ -85,7 +85,7 @@ local function cleanupPlayer(player)
 		end
 	end
 
-	-- El resto de tu lógica de guardado sigue aquí, intacta.
+	-- El resto de tu lï¿½gica de guardado sigue aquï¿½, intacta.
 	task.spawn(function()
 		GameStatsManager.Save(player)
 		PersonajeManager.Save(player)
@@ -102,14 +102,14 @@ Players.PlayerRemoving:Connect(cleanupPlayer)
 task.spawn(function()
 	while task.wait(60) do
 		for _, player in ipairs(Players:GetPlayers()) do
-			-- Usamos pcall aquí para que si falla un jugador, no detenga el bucle para los demás.
+			-- Usamos pcall aquï¿½ para que si falla un jugador, no detenga el bucle para los demï¿½s.
 			pcall(cleanupPlayer, player)
 		end
 	end
 end)
 
 -- --- MANEJADORES DE EVENTOS DE LA UI ---
--- (Todas tus funciones de aquí en adelante no necesitan cambios)
+-- (Todas tus funciones de aquï¿½ en adelante no necesitan cambios)
 
 cambiarPersonajeEvent.OnServerEvent:Connect(function(player, tipo, nombre)
 	if tipo == "Asesino" or tipo == "Sobreviviente" then
@@ -120,7 +120,7 @@ end)
 ComprarPersonaje.OnServerEvent:Connect(function(player, tipo, nombrePersonaje)
 	print("El jugador", player.Name, "quiere comprar:", nombrePersonaje)
 	if not (tipo and nombrePersonaje and CharacterConfig[tipo] and CharacterConfig[tipo][nombrePersonaje]) then
-		warn("Intento de compra inválido por", player.Name)
+		warn("Intento de compra invï¿½lido por", player.Name)
 		return
 	end
 	if PersonajeManager.OwnsCharacter(player, tipo, nombrePersonaje) then
@@ -133,7 +133,7 @@ ComprarPersonaje.OnServerEvent:Connect(function(player, tipo, nombrePersonaje)
 		print("Procesando compra para", player.Name, ". Precio:", precio)
 		GameStatsManager.AddStats(player, {Coins = -precio})
 		PersonajeManager.UnlockCharacter(player, tipo, nombrePersonaje)
-		print("¡Compra exitosa para", player.Name, "!")
+		print("ï¿½Compra exitosa para", player.Name, "!")
 		RefreshShopEvent:FireClient(player)
 	else
 		print(player.Name, "no tiene suficientes monedas.")

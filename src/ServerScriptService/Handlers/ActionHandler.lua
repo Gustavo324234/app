@@ -1,21 +1,21 @@
--- ServerScriptService/Handlers/ActionHandler.lua (VERSIÓN MODULAR Y CONFIGURABLE)
+-- ServerScriptService/Handlers/ActionHandler.lua (VERSIï¿½N MODULAR Y CONFIGURABLE)
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local CharacterConfig = require(game.ReplicatedStorage.Modules.Data.CharacterConfig)
 local PlayerManager = require(ServerScriptService.Modules.PlayerManager)
-local HitboxManager = require(ServerScriptService.Modules.HitboxManager) -- <<-- AÑADIDO
-local DebugDraw = require(ServerScriptService.Modules.DebugDraw)       -- <<-- AÑADIDO (para asegurar la referencia)
+local HitboxManager = require(ServerScriptService.Modules.HitboxManager) -- <<-- Aï¿½ADIDO
+local DebugDraw = require(ServerScriptService.Modules.DebugDraw)       -- <<-- Aï¿½ADIDO (para asegurar la referencia)
 
 local ActionHandler = {}
 local attackCooldowns = {}
 
---- [[ BALANCE Y CONFIGURACIÓN ]] ---
+--- [[ BALANCE Y CONFIGURACIï¿½N ]] ---
 -- Constantes para el debuff de "Heridas Graves".
 local HEALING_REDUCTION_ON_HIT = 0.50
 local HEALING_REDUCTION_DURATION = 8
 
--- Parámetros del hitbox del ataque básico.
+-- Parï¿½metros del hitbox del ataque bï¿½sico.
 local BASIC_ATTACK_HITBOX_DELAY = 0.2 -- Tiempo de espera para el hitbox.
 local BASIC_ATTACK_VISUAL_SIZE = Vector3.new(8, 8, 0) -- Ancho y alto de la caja visual. El largo lo da el rango.
 
@@ -36,13 +36,13 @@ function ActionHandler.OnBasicAttack(player)
 	local PlayerAttackEvent = ReplicatedStorage.RemoteEvents:WaitForChild("PlayerAttack")
 	PlayerAttackEvent:FireClient(player, "BasicAttack")
 
-	-- <<-- CAMBIO: Leemos el delay desde la sección de configuración -->>
+	-- <<-- CAMBIO: Leemos el delay desde la secciï¿½n de configuraciï¿½n -->>
 	task.wait(BASIC_ATTACK_HITBOX_DELAY)
 
 	local currentChar = player.Character
 	if not currentChar then return end
 
-	-- 1. Definimos los parámetros para nuestro HitboxManager.
+	-- 1. Definimos los parï¿½metros para nuestro HitboxManager.
 	local hitboxParams = {
 		Attacker = currentChar,
 		Targets = PlayerManager.GetSurvivors(),
@@ -50,33 +50,33 @@ function ActionHandler.OnBasicAttack(player)
 		Arc = stats.Arc
 	}
 
-	-- 2. Llamamos al manager para que nos dé el objetivo golpeado.
+	-- 2. Llamamos al manager para que nos dï¿½ el objetivo golpeado.
 	local targetsHit = HitboxManager.GetHitsInCone(hitboxParams)
 
 	-- 3. Decidimos el color y llamamos a DebugDraw para visualizar el hitbox.
 	local hitboxColor = #targetsHit > 0 and Color3.new(0, 1, 0) or Color3.new(1, 0, 0)
 	local currentHrp = currentChar:FindFirstChild("HumanoidRootPart")
 	if currentHrp and DebugDraw and DebugDraw.Box then
-		-- <<-- CAMBIO: Leemos el tamaño desde la sección de configuración -->>
+		-- <<-- CAMBIO: Leemos el tamaï¿½o desde la secciï¿½n de configuraciï¿½n -->>
 		local visualSize = Vector3.new(BASIC_ATTACK_VISUAL_SIZE.X, BASIC_ATTACK_VISUAL_SIZE.Y, stats.Range)
 		local visualCFrame = currentHrp.CFrame * CFrame.new(0, 0, -stats.Range / 2)
 		DebugDraw.Box(visualCFrame, visualSize, hitboxColor, 1)
 	end
 
-	-- 4. Aplicamos el daño y los debuffs al objetivo que el manager encontró.
+	-- 4. Aplicamos el daï¿½o y los debuffs al objetivo que el manager encontrï¿½.
 	if #targetsHit > 0 then
 		local targetHit = targetsHit[1] -- El cono solo golpea a uno.
 		local survivorChar = targetHit:IsA("Player") and targetHit.Character or targetHit
 		local survivorHumanoid = survivorChar:FindFirstChildOfClass("Humanoid")
 
-		-- Tu lógica de daño y debuffs, 100% intacta.
+		-- Tu lï¿½gica de daï¿½o y debuffs, 100% intacta.
 		local passiveReduction = (targetHit:IsA("Player") and targetHit:GetAttribute("DamageReduction")) or 0
 		local ultimateReduction = (targetHit:IsA("Player") and targetHit:GetAttribute("UltimateDamageReduction")) or 0
 		local totalReduction = 1 - (1 - passiveReduction) * (1 - ultimateReduction)
 		local finalDamage = stats.Damage * (1 - totalReduction)
 
 		survivorHumanoid:TakeDamage(finalDamage)
-		print(string.format("¡Ataque a %s! Daño base: %.1f, Reducción Total: %.2f%%, Daño final: %.1f", targetHit.Name, stats.Damage, totalReduction * 100, finalDamage))
+		print(string.format("ï¿½Ataque a %s! Daï¿½o base: %.1f, Reducciï¿½n Total: %.2f%%, Daï¿½o final: %.1f", targetHit.Name, stats.Damage, totalReduction * 100, finalDamage))
 
 		if targetHit:IsA("Player") then
 			targetHit:SetAttribute("HealingReduction", HEALING_REDUCTION_ON_HIT)
@@ -94,7 +94,7 @@ end
 function ActionHandler.Initialize()
 	local PlayerAttackEvent = ReplicatedStorage.RemoteEvents:WaitForChild("PlayerAttack")
 	PlayerAttackEvent.OnServerEvent:Connect(ActionHandler.OnBasicAttack)
-	print("[ActionHandler] Sistema de acciones básicas listo y escuchando.")
+	print("[ActionHandler] Sistema de acciones bï¿½sicas listo y escuchando.")
 end
 
 return ActionHandler

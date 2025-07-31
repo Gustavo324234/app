@@ -1,8 +1,8 @@
--- ServerScriptService/Abilities/KillerAbilities/SizzlingSwing.lua (VERSIÓN CON PARÁMETROS CONFIGURABLES)
+-- ServerScriptService/Abilities/KillerAbilities/SizzlingSwing.lua (VERSIï¿½N CON PARï¿½METROS CONFIGURABLES)
 
 local SizzlingSwing = {}
 
--- Tus propiedades están 100% intactas.
+-- Tus propiedades estï¿½n 100% intactas.
 SizzlingSwing.Type = "Active"
 SizzlingSwing.Name = "SizzlingSwing"
 SizzlingSwing.DisplayName = "Sizzling Swing"
@@ -11,15 +11,15 @@ SizzlingSwing.Icon = "rbxassetid://138216429824143"
 SizzlingSwing.Keybinds = { Keyboard = Enum.KeyCode.Q, Gamepad = Enum.KeyCode.ButtonX }
 SizzlingSwing.RequiredEvents = { { Name = "PlayerAttack", Direction = "S_TO_C" } }
 
--- [[ NUEVA SECCIÓN DE CONFIGURACIÓN FÁCIL ]]
--- Modifica los valores en esta tabla para balancear la habilidad sin tocar el código de abajo.
+-- [[ NUEVA SECCIï¿½N DE CONFIGURACIï¿½N Fï¿½CIL ]]
+-- Modifica los valores en esta tabla para balancear la habilidad sin tocar el cï¿½digo de abajo.
 SizzlingSwing.Stats = {
 	BaseDamage = 100,
 	HitboxSize = Vector3.new(12, 8, 14), -- (Ancho, Alto, Profundidad)
-	HitboxDelay = 0.4 -- Segundos de espera entre la animación y el hitbox.
+	HitboxDelay = 0.4 -- Segundos de espera entre la animaciï¿½n y el hitbox.
 }
 
--- Tus referencias a servicios están 100% intactas.
+-- Tus referencias a servicios estï¿½n 100% intactas.
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -27,15 +27,15 @@ local DebugDraw = require(ServerScriptService.Modules.DebugDraw)
 local HitboxManager = require(ServerScriptService.Modules.HitboxManager)
 local Events = {}
 
--- Tu función Initialize está 100% intacta.
+-- Tu funciï¿½n Initialize estï¿½ 100% intacta.
 function SizzlingSwing.Initialize(eventReferences) Events = eventReferences end
 
--- Tu función GetCooldown está 100% intacta.
+-- Tu funciï¿½n GetCooldown estï¿½ 100% intacta.
 function SizzlingSwing.GetCooldown(player, modifiers)
 	return modifiers.SizzlingSwing_Cooldown or SizzlingSwing.Cooldown
 end
 
--- La función Execute ahora usa los parámetros de la tabla de configuración.
+-- La funciï¿½n Execute ahora usa los parï¿½metros de la tabla de configuraciï¿½n.
 function SizzlingSwing.Execute(player, modifiers)
 	local character = player.Character
 	if not character then return false end
@@ -54,10 +54,10 @@ function SizzlingSwing.Execute(player, modifiers)
 		local hrp = currentCharacter and currentCharacter.HumanoidRootPart
 		if not hrp then return end
 
-		-- <<-- CAMBIO: Leemos el tamaño del hitbox desde la tabla de Stats -->>
+		-- <<-- CAMBIO: Leemos el tamaï¿½o del hitbox desde la tabla de Stats -->>
 		local hitboxSize = SizzlingSwing.Stats.HitboxSize
 
-		-- La posición del hitbox ahora se calcula usando el tamaño de la tabla de Stats.
+		-- La posiciï¿½n del hitbox ahora se calcula usando el tamaï¿½o de la tabla de Stats.
 		local hitboxParams = {
 			Attacker = currentCharacter,
 			HitboxSize = hitboxSize,
@@ -72,14 +72,14 @@ function SizzlingSwing.Execute(player, modifiers)
 		end
 
 		if #targetsHit > 0 then
-			-- <<-- CAMBIO: Leemos el daño base desde la tabla de Stats -->>
-			-- La lógica de modificadores sigue funcionando: si existe un modificador, lo usa. Si no, usa el valor de la tabla.
+			-- <<-- CAMBIO: Leemos el daï¿½o base desde la tabla de Stats -->>
+			-- La lï¿½gica de modificadores sigue funcionando: si existe un modificador, lo usa. Si no, usa el valor de la tabla.
 			local damage = modifiers.SizzlingSwing_Damage or SizzlingSwing.Stats.BaseDamage
 
 			for _, enemyCharacter in ipairs(targetsHit) do
 				local enemyHumanoid = enemyCharacter:FindFirstChildOfClass("Humanoid")
 				enemyHumanoid:TakeDamage(damage)
-				print("¡Sizzling Swing golpeó a", enemyCharacter.Name, "!")
+				print("ï¿½Sizzling Swing golpeï¿½ a", enemyCharacter.Name, "!")
 			end
 		end
 	end)

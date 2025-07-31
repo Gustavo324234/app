@@ -1,4 +1,4 @@
--- ServerScriptService/Modules/Data/PersonajeManager.lua (Versión Final y Limpia)
+-- ServerScriptService/Modules/Data/PersonajeManager.lua (Versiï¿½n Final y Limpia)
 
 local DataStoreService = game:GetService("DataStoreService")
 local personajeDataStore = DataStoreService:GetDataStore("PersonajeData_V8") 
@@ -6,10 +6,10 @@ local CharacterConfig = require(game.ReplicatedStorage.Modules.Data.CharacterCon
 
 local PersonajeManager = {}
 
--- Tabla interna para guardar los datos de los jugadores mientras están en línea
+-- Tabla interna para guardar los datos de los jugadores mientras estï¿½n en lï¿½nea
 local playerSessionData = {}
 
--- Función de ayuda para obtener la lista de personajes por defecto (los gratuitos)
+-- Funciï¿½n de ayuda para obtener la lista de personajes por defecto (los gratuitos)
 local function getDefaultCharacters()
 	local owned = {Asesino = {}, Sobreviviente = {}}
 	for tipo, personajes in pairs(CharacterConfig) do
@@ -24,7 +24,7 @@ end
 
 -- Carga los datos del jugador desde el DataStore cuando entra al juego
 function PersonajeManager.Load(player)
-	-- --- Inicio de la Depuración ---
+	-- --- Inicio de la Depuraciï¿½n ---
 	--print("--- [DEBUG/PersonajeManager] Cargando datos para el jugador:", player.Name, "(ID:", player.UserId, ")")
 
 	local success, data = pcall(function()
@@ -32,9 +32,9 @@ function PersonajeManager.Load(player)
 	end)
 
 	if success then
-		-- La llamada al DataStore funcionó
+		-- La llamada al DataStore funcionï¿½
 		if data and data.Owned and data.Selected then
-			-- Se encontraron datos válidos y completos
+			-- Se encontraron datos vï¿½lidos y completos
 			--print("--- [DEBUG/PersonajeManager] Se encontraron datos guardados para", player.Name)
 			-- Imprimimos los datos que se encontraron para poder verlos
 			--print("    > Personajes que posee:", data.Owned)
@@ -44,8 +44,8 @@ function PersonajeManager.Load(player)
 			player:SetAttribute("PersonajeAsesino", data.Selected.Asesino or "Bacon Hair")
 			player:SetAttribute("PersonajeSobreviviente", data.Selected.Sobreviviente or "Noob")
 		else
-			-- El jugador es nuevo o sus datos están incompletos/corruptos
-			print("--- [DEBUG/PersonajeManager] No se encontraron datos válidos para", player.Name, ". Asignando defaults.")
+			-- El jugador es nuevo o sus datos estï¿½n incompletos/corruptos
+			print("--- [DEBUG/PersonajeManager] No se encontraron datos vï¿½lidos para", player.Name, ". Asignando defaults.")
 			local defaults = {
 				Selected = { Asesino = "Bacon Hair", Sobreviviente = "Noob" },
 				Owned = getDefaultCharacters()
@@ -58,8 +58,8 @@ function PersonajeManager.Load(player)
 			player:SetAttribute("PersonajeSobreviviente", "Noob")
 		end
 	else
-		-- La llamada al DataStore falló por un error del servicio
-		warn("--- [ERROR/PersonajeManager] Falló la llamada a DataStore para", player.Name, ". Asignando defaults. Error:", data)
+		-- La llamada al DataStore fallï¿½ por un error del servicio
+		warn("--- [ERROR/PersonajeManager] Fallï¿½ la llamada a DataStore para", player.Name, ". Asignando defaults. Error:", data)
 		local defaults = {
 			Selected = { Asesino = "Bacon Hair", Sobreviviente = "Noob" },
 			Owned = getDefaultCharacters()
@@ -73,11 +73,11 @@ function PersonajeManager.Load(player)
 	--print("--- [DEBUG/PersonajeManager] Carga de datos finalizada para", player.Name)
 end
 
--- Guarda los datos de la sesión del jugador en el DataStore
+-- Guarda los datos de la sesiï¿½n del jugador en el DataStore
 function PersonajeManager.Save(player)
 	local dataToSave = playerSessionData[player.UserId]
 	if not dataToSave then 
-		warn("No se encontraron datos de sesión para guardar para:", player.Name)
+		warn("No se encontraron datos de sesiï¿½n para guardar para:", player.Name)
 		return 
 	end
 
@@ -93,36 +93,36 @@ function PersonajeManager.Save(player)
 	end
 end
 
--- Limpia los datos de la sesión del jugador cuando se desconecta
+-- Limpia los datos de la sesiï¿½n del jugador cuando se desconecta
 function PersonajeManager.Cleanup(player)
 	if playerSessionData[player.UserId] then
 		playerSessionData[player.UserId] = nil
-		print("Datos de sesión de personaje limpiados para:", player.Name)
+		print("Datos de sesiï¿½n de personaje limpiados para:", player.Name)
 	end
 end
 
--- Añade un personaje a la lista de posesiones del jugador en la sesión actual
+-- Aï¿½ade un personaje a la lista de posesiones del jugador en la sesiï¿½n actual
 function PersonajeManager.UnlockCharacter(player, tipo, nombrePersonaje)
 	local data = playerSessionData[player.UserId]
 	if data and data.Owned and data.Owned[tipo] then
 		table.insert(data.Owned[tipo], nombrePersonaje)
-		print(player.Name, "desbloqueó a", nombrePersonaje)
+		print(player.Name, "desbloqueï¿½ a", nombrePersonaje)
 	end
 end
 
--- Comprueba si el jugador posee un personaje, leyendo de la sesión actual
+-- Comprueba si el jugador posee un personaje, leyendo de la sesiï¿½n actual
 function PersonajeManager.OwnsCharacter(player, tipo, nombrePersonaje)
 	local data = playerSessionData[player.UserId]
 	--print("--- [DEBUG/OwnsCharacter] Comprobando si", player.Name, "posee", nombrePersonaje, "de tipo", tipo)
 
 	if not data or not data.Owned or not data.Owned[tipo] then 
-		print("--- [DEBUG/OwnsCharacter] No se encontraron datos de posesión. Devuelve: false")
+		print("--- [DEBUG/OwnsCharacter] No se encontraron datos de posesiï¿½n. Devuelve: false")
 		return false 
 	end
 
 	for _, nameInList in ipairs(data.Owned[tipo]) do
 		if nameInList == nombrePersonaje then
-			print("--- [DEBUG/OwnsCharacter] ¡Encontrado! Devuelve: true")
+			print("--- [DEBUG/OwnsCharacter] ï¿½Encontrado! Devuelve: true")
 			return true
 		end
 	end

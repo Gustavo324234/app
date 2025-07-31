@@ -1,5 +1,5 @@
--- ServerScriptService/Modules/SetupManager.lua (VERSIÓN CORREGIDA Y COMPLETA)
--- Este módulo se encarga de crear todas las instancias compartidas al inicio del juego
+-- ServerScriptService/Modules/SetupManager.lua (VERSIï¿½N CORREGIDA Y COMPLETA)
+-- Este mï¿½dulo se encarga de crear todas las instancias compartidas al inicio del juego
 -- para garantizar que existan antes de que cualquier otro script las necesite.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -7,7 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SetupManager = {}
 
 function SetupManager.Initialize()
-	print("[SetupManager] Iniciando la configuración de instancias compartidas...")
+	print("[SetupManager] Iniciando la configuraciï¿½n de instancias compartidas...")
 
 	-- 1. Crear la carpeta principal de eventos si no existe
 	local eventsFolder = ReplicatedStorage:FindFirstChild("RemoteEvents")
@@ -23,13 +23,13 @@ function SetupManager.Initialize()
 		-- ==              EVENTOS GENERALES Y DEL SISTEMA                ==
 		-- =================================================================
 		"AnnounceMessage",    -- [[ RESTAURADO ]] Servidor -> Todos los Clientes. Usado para anuncios grandes y persistentes en la UI (ej. "EL ASESINO HA SIDO ELEGIDO").
-		"UpdateTimer",        -- Servidor -> Cliente. Envía el tiempo restante de la ronda para actualizar la UI.
-		"PlayerDied",         -- Servidor -> Todos los Clientes. Notifica que un jugador ha muerto, útil para contadores, UI, etc.
-		"ShowMessage",          -- Servidor -> Cliente. Muestra un mensaje temporal o menos importante (ej. "¡La ronda comienza en 5!").
+		"UpdateTimer",        -- Servidor -> Cliente. Envï¿½a el tiempo restante de la ronda para actualizar la UI.
+		"PlayerDied",         -- Servidor -> Todos los Clientes. Notifica que un jugador ha muerto, ï¿½til para contadores, UI, etc.
+		"ShowMessage",          -- Servidor -> Cliente. Muestra un mensaje temporal o menos importante (ej. "ï¿½La ronda comienza en 5!").
 		"ToggleGameUI",       -- Servidor -> Cliente. Muestra/Oculta la UI principal del juego (habilidades, vida, etc.).
-		"ToggleLobbyUI",      -- Servidor -> Cliente. Muestra/Oculta la UI específica del lobby.
+		"ToggleLobbyUI",      -- Servidor -> Cliente. Muestra/Oculta la UI especï¿½fica del lobby.
 		"UpdateBeats",        -- Servidor -> Cliente. Actualiza la cantidad de "Beats" (moneda) en la UI del jugador.
-		"UpdateLeaderboardBeats", -- Servidor -> Todos los Clientes. Actualiza los datos de la tabla de clasificación.
+		"UpdateLeaderboardBeats", -- Servidor -> Todos los Clientes. Actualiza los datos de la tabla de clasificaciï¿½n.
 
 		-- =================================================================
 		-- ==                 EVENTOS DEL SISTEMA DE HABILIDADES          ==
@@ -37,11 +37,11 @@ function SetupManager.Initialize()
 		"UseAbility",         -- Cliente -> Servidor. El jugador solicita usar una habilidad activa (ej. presiona 'Q').
 		"TogglePassiveAbility",-- Cliente -> Servidor. El jugador solicita activar o desactivar una habilidad pasiva.
 		"AbilityUsed",        -- Servidor -> Todos los Clientes. Notifica que se ha usado una habilidad para que reproduzcan efectos visuales/sonoros (VFX/SFX).
-		"UpdateAbilityUI",    -- Servidor -> Cliente. Envía datos para actualizar la UI de habilidades de un jugador (cooldowns, iconos).
-		"PlayerAttack",       -- Cliente -> Servidor. El Asesino solicita realizar un ataque básico.
+		"UpdateAbilityUI",    -- Servidor -> Cliente. Envï¿½a datos para actualizar la UI de habilidades de un jugador (cooldowns, iconos).
+		"PlayerAttack",       -- Cliente -> Servidor. El Asesino solicita realizar un ataque bï¿½sico.
 		"ShowDebuffUI",       -- Servidor -> Cliente. Indica a un jugador que muestre un icono de efecto negativo (ralentizado, quemado, etc.).
-		"ApplyState",         -- Servidor -> Cliente. Ordena al cliente que se aplique a sí mismo un estado (ej. "Stunned") para resolver problemas de Network Ownership.
-		"ObscureVision",      -- Servidor -> Cliente. Un efecto de habilidad específico que le dice al cliente que su visión debe ser oscurecida.
+		"ApplyState",         -- Servidor -> Cliente. Ordena al cliente que se aplique a sï¿½ mismo un estado (ej. "Stunned") para resolver problemas de Network Ownership.
+		"ObscureVision",      -- Servidor -> Cliente. Un efecto de habilidad especï¿½fico que le dice al cliente que su visiï¿½n debe ser oscurecida.
 
 		-- =================================================================
 		-- ==                   EVENTOS DE LA TIENDA Y LOBBY              ==

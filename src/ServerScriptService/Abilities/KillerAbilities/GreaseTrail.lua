@@ -2,7 +2,7 @@
 
 local GreaseTrail = {}
 
---[[ 1. CONFIGURACIÓN ]]--
+--[[ 1. CONFIGURACIï¿½N ]]--
 GreaseTrail.Type = "Passive"
 GreaseTrail.Name = "GreaseTrail"
 GreaseTrail.DisplayName = "Grease Trail"
@@ -10,7 +10,7 @@ GreaseTrail.Icon = "rbxassetid://112501166997964"
 GreaseTrail.Keybinds = { Keyboard = Enum.KeyCode.G, Gamepad = Enum.KeyCode.ButtonY }
 GreaseTrail.RequiredEvents = { { Name = "ShowDebuffUI", Direction = "S_TO_C" } }
 
--- Parámetros
+-- Parï¿½metros
 local PUDDLE_DURATION = 12
 local PUDDLE_INTERVAL = 0.4
 local MAX_PUDDLES = 20
@@ -19,7 +19,7 @@ local SLOW_DURATION = 3
 local ENHANCED_SLOW_FACTOR = 0.6
 local ENHANCED_SCALE_FACTOR = 3
 
---[[ 2. LÓGICA INTERNA ]]--
+--[[ 2. Lï¿½GICA INTERNA ]]--
 local Debris = game:GetService("Debris")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
@@ -31,7 +31,7 @@ local PUDDLE_TEMPLATES = ReplicatedStorage.VFX.GreasePuddles:GetChildren()
 
 -- --- FUNCIONES DE AYDA ---
 
--- La función createPuddle no necesita cambiar, ya que el estado "isEnhanced" se le pasa desde fuera.
+-- La funciï¿½n createPuddle no necesita cambiar, ya que el estado "isEnhanced" se le pasa desde fuera.
 local function createPuddle(position, isEnhanced)
 	if #PUDDLE_TEMPLATES == 0 then return nil, nil end
 	local randomTemplate = PUDDLE_TEMPLATES[math.random(1, #PUDDLE_TEMPLATES)]
@@ -131,7 +131,7 @@ function GreaseTrail.Activate(player, modifiers)
 					if oldestPuddle and oldestPuddle.Parent then oldestPuddle:Destroy() end
 				end
 
-				-- [[ LA LÓGICA CORRECTA ]]
+				-- [[ LA Lï¿½GICA CORRECTA ]]
 				-- Ahora podemos leer la tabla de modificadores directamente.
 				local isEnhanced = modifiers.GreaseTrail_Enhanced
 

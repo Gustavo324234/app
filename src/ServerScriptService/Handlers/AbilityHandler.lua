@@ -1,18 +1,18 @@
--- ServerScriptService/Handlers/AbilityHandler.lua (VERSIÓN FINAL, REVISADA Y ROBUSTA)
+-- ServerScriptService/Handlers/AbilityHandler.lua (VERSIï¿½N FINAL, REVISADA Y ROBUSTA)
 
 local ServerScriptService = game:GetService("ServerScriptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CharacterConfig = require(game.ReplicatedStorage.Modules.Data.CharacterConfig)
 local ABILITIES_FOLDER_ROOT = ServerScriptService:WaitForChild("Abilities")
 
--- Variables de eventos para un acceso más rápido
+-- Variables de eventos para un acceso mï¿½s rï¿½pido
 local RemoteEvents
 local UseAbilityEvent, UpdateAbilityUIEvent, AbilityUsedEvent, TogglePassiveEvent
 
 local AbilityHandler = {}
 local activePlayerAbilities = {}
 
--- Esta función se llama una sola vez al iniciar el servidor (ej. desde un GameManager).
+-- Esta funciï¿½n se llama una sola vez al iniciar el servidor (ej. desde un GameManager).
 function AbilityHandler.Initialize()
 	RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
 	UseAbilityEvent = RemoteEvents:WaitForChild("UseAbility")
@@ -24,7 +24,7 @@ function AbilityHandler.Initialize()
 	UseAbilityEvent.OnServerEvent:Connect(AbilityHandler.OnUseAbility)
 	TogglePassiveEvent.OnServerEvent:Connect(AbilityHandler.OnTogglePassive)
 
-	print("[AbilityHandler] Módulo inicializado y eventos conectados.")
+	print("[AbilityHandler] Mï¿½dulo inicializado y eventos conectados.")
 end
 
 -- Asigna las habilidades a un jugador cuando su personaje se carga o cambia de rol.
@@ -53,7 +53,7 @@ function AbilityHandler.GiveAbilities(player)
 		if abilityModuleScript then
 			local abilityModule = require(abilityModuleScript)
 
-			-- Inicializa el módulo de habilidad y le pasa las referencias a los eventos que necesita
+			-- Inicializa el mï¿½dulo de habilidad y le pasa las referencias a los eventos que necesita
 			if abilityModule.Initialize then
 				local eventRefs = {}
 				if abilityModule.RequiredEvents then
@@ -71,7 +71,7 @@ function AbilityHandler.GiveAbilities(player)
 
 			activePlayerAbilities[player].Abilities[abilityID] = { Module = abilityModule, CooldownEndTime = 0 }
 
-			-- [[ CORRECCIÓN ]] Obtenemos el cooldown inicial de forma segura
+			-- [[ CORRECCIï¿½N ]] Obtenemos el cooldown inicial de forma segura
 			local initialCooldown = 0
 			if abilityModule.GetCooldown then
 				initialCooldown = abilityModule.GetCooldown(player, {})
@@ -110,7 +110,7 @@ function AbilityHandler.OnUseAbility(player, abilityID)
 	local playerData = activePlayerAbilities[player]
 	local abilityData = playerData.Abilities[abilityID]
 
-	-- 1. Comprobar si la habilidad está en cooldown
+	-- 1. Comprobar si la habilidad estï¿½ en cooldown
 	if os.clock() < abilityData.CooldownEndTime then return end
 
 	-- 2. Ejecutar la habilidad de forma segura con pcall
@@ -119,14 +119,14 @@ function AbilityHandler.OnUseAbility(player, abilityID)
 		success, result = pcall(abilityData.Module.Execute, player, playerData.Modifiers)
 	end
 
-	-- Si la ejecución falló o la habilidad devolvió 'false', nos detenemos
+	-- Si la ejecuciï¿½n fallï¿½ o la habilidad devolviï¿½ 'false', nos detenemos
 	if not success then
 		warn("[AbilityHandler] Error al ejecutar la habilidad '"..tostring(abilityID).."':", tostring(result))
 		return 
 	end
-	if not result then return end -- La propia habilidad decidió no continuar
+	if not result then return end -- La propia habilidad decidiï¿½ no continuar
 
-	-- 3. Obtener el cooldown DESPUÉS de ejecutar la habilidad
+	-- 3. Obtener el cooldown DESPUï¿½S de ejecutar la habilidad
 	local currentCooldown = 0
 	if abilityData.Module.GetCooldown then
 		currentCooldown = abilityData.Module.GetCooldown(player, playerData.Modifiers)
@@ -137,7 +137,7 @@ function AbilityHandler.OnUseAbility(player, abilityID)
 	-- 4. Aplicar el cooldown
 	abilityData.CooldownEndTime = os.clock() + currentCooldown
 
-	-- [[ CORRECCIÓN ]] Usamos el evento y el formato correctos para actualizar la UI del cliente.
+	-- [[ CORRECCIï¿½N ]] Usamos el evento y el formato correctos para actualizar la UI del cliente.
 	UpdateAbilityUIEvent:FireClient(player, {
 		type = "Cooldown",
 		abilityID = abilityID,
@@ -151,7 +151,7 @@ function AbilityHandler.OnTogglePassive(player, abilityID)
 	local abilityData = activePlayerAbilities[player].Abilities[abilityID]
 	if abilityData.Module.Toggle then
 		local newState = abilityData.Module.Toggle(player)
-		-- Reenviamos el nuevo estado al cliente para que la UI esté sincronizada
+		-- Reenviamos el nuevo estado al cliente para que la UI estï¿½ sincronizada
 		TogglePassiveEvent:FireClient(player, abilityID, newState)
 	end
 end

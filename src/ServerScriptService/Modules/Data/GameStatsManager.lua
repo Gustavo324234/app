@@ -1,5 +1,5 @@
 -- ServerScriptService/Modules/Data/GameStatsManager.lua
--- MEJORADO: Centraliza toda la modificación de estadísticas.
+-- MEJORADO: Centraliza toda la modificaciï¿½n de estadï¿½sticas.
 
 local DataStoreService = game:GetService("DataStoreService")
 local statsStore = DataStoreService:GetDataStore("PlayerStats_V8") -- Versionado
@@ -9,14 +9,14 @@ local GameStatsManager = {}
 local DEFAULT_STATS = { Coins = 0, KillerWins = 0, SurvivorWins = 0 }
 
 function GameStatsManager.Load(player)
-	-- Tu lógica de carga (ya estaba bien)
+	-- Tu lï¿½gica de carga (ya estaba bien)
 end
 
 function GameStatsManager.Save(player)
-	-- Tu lógica de guardado (ya estaba bien)
+	-- Tu lï¿½gica de guardado (ya estaba bien)
 end
 
--- CAMBIO: Nueva función centralizada para añadir estadísticas
+-- CAMBIO: Nueva funciï¿½n centralizada para aï¿½adir estadï¿½sticas
 function GameStatsManager.AddStats(player, statsToAdd)
 	local leaderstats = player:FindFirstChild("leaderstats")
 	if not leaderstats then return end

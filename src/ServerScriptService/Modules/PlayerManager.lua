@@ -1,4 +1,4 @@
--- ServerScriptService/Modules/PlayerManager.lua (VERSIÓN FINAL CON LECTURA DE DATOS GUARDADOS)
+-- ServerScriptService/Modules/PlayerManager.lua (VERSIï¿½N FINAL CON LECTURA DE DATOS GUARDADOS)
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -33,7 +33,7 @@ end
 
 local function spawnBot(botType)
 	local botsFolder = ReplicatedStorage:FindFirstChild("Bots")
-	if not botsFolder then warn("¡FALLO! No se encontró la carpeta 'Bots' en ReplicatedStorage.") return nil end
+	if not botsFolder then warn("ï¿½FALLO! No se encontrï¿½ la carpeta 'Bots' en ReplicatedStorage.") return nil end
 	local botTemplate = botsFolder:FindFirstChild(botType)
 	if botTemplate then
 		local botInstance = botTemplate:Clone()
@@ -42,7 +42,7 @@ local function spawnBot(botType)
 		botInstance.Parent = Workspace
 		return botInstance
 	else
-		warn("¡FALLO! No se pudo encontrar la plantilla del bot:", botType)
+		warn("ï¿½FALLO! No se pudo encontrar la plantilla del bot:", botType)
 	end
 	return nil
 end
@@ -52,7 +52,7 @@ local function asignarPersonaje(player, rol)
 	local folderName = (rol == "Killer" and "Asesinos" or "Sobrevivientes")
 	local carpetaDeRol = personajesFolder:FindFirstChild(folderName)
 	if not carpetaDeRol then
-		warn("No se encontró la carpeta de personaje:", folderName, ". Cargando avatar por defecto.")
+		warn("No se encontrï¿½ la carpeta de personaje:", folderName, ". Cargando avatar por defecto.")
 		player:LoadCharacter(); return player.Character or player.CharacterAdded:Wait()
 	end
 	local characterNameAttribute = "Personaje" .. rol
@@ -61,10 +61,10 @@ local function asignarPersonaje(player, rol)
 	local personajeNombre = personajeSeleccionado or personajePorDefecto
 	local modeloPersonaje = carpetaDeRol:FindFirstChild(personajeNombre)
 	if not modeloPersonaje then
-		warn("No se encontró el modelo:", personajeNombre, ". Usando por defecto.")
+		warn("No se encontrï¿½ el modelo:", personajeNombre, ". Usando por defecto.")
 		modeloPersonaje = carpetaDeRol:FindFirstChild(personajePorDefecto)
 		if not modeloPersonaje then
-			warn("No se encontró ni el modelo por defecto. Cargando avatar de Roblox.")
+			warn("No se encontrï¿½ ni el modelo por defecto. Cargando avatar de Roblox.")
 			player:LoadCharacter(); return player.Character or player.CharacterAdded:Wait()
 		end
 	end
@@ -101,7 +101,7 @@ local function moveCharacter(entity, position)
 end
 
 -- =================================================================================
--- FUNCIONES PÚBLICAS DEL MÓDULO (SIN CAMBIOS)
+-- FUNCIONES Pï¿½BLICAS DEL Mï¿½DULO (SIN CAMBIOS)
 -- =================================================================================
 
 function PlayerManager.Initialize()
@@ -248,19 +248,19 @@ function PlayerManager.Reset()
 end
 
 -- =================================================================================
--- INICIALIZACIÓN Y GESTIÓN DE JUGADORES (SECCIÓN MODIFICADA)
+-- INICIALIZACIï¿½N Y GESTIï¿½N DE JUGADORES (SECCIï¿½N MODIFICADA)
 -- =================================================================================
 
--- <<-- MODIFICADO: Esta función ahora lee los datos cargados por PlayerDataHandler -->>
+-- <<-- MODIFICADO: Esta funciï¿½n ahora lee los datos cargados por PlayerDataHandler -->>
 Players.PlayerAdded:Connect(function(player)
-	-- Esperamos a que PlayerDataHandler cargue los datos y nos los comunique vía un atributo.
+	-- Esperamos a que PlayerDataHandler cargue los datos y nos los comunique vï¿½a un atributo.
 	local loadedBeats
 	repeat
-		task.wait(0.1) -- Pequeña espera para no sobrecargar el procesador.
+		task.wait(0.1) -- Pequeï¿½a espera para no sobrecargar el procesador.
 		loadedBeats = player:GetAttribute("LoadedBeats")
 	until loadedBeats ~= nil
 
-	-- Usamos el valor cargado para inicializar la lógica interna de esta sesión.
+	-- Usamos el valor cargado para inicializar la lï¿½gica interna de esta sesiï¿½n.
 	playerBeats[player] = loadedBeats
 	player:SetAttribute("LoadedBeats", nil) -- Limpiamos el atributo, ya no lo necesitamos.
 
@@ -271,7 +271,7 @@ Players.PlayerAdded:Connect(function(player)
 
 	print(string.format("[PlayerManager] Jugador %s inicializado con %d Beats (cargados de DataStore).", player.Name, loadedBeats))
 
-	-- Enviamos la información al cliente y al resto de jugadores.
+	-- Enviamos la informaciï¿½n al cliente y al resto de jugadores.
 	if UpdateBeatsEvent then UpdateBeatsEvent:FireClient(player, loadedBeats) end
 	broadcastBeats()
 end)
@@ -283,7 +283,7 @@ Players.PlayerRemoving:Connect(function(player)
 	end
 end)
 
--- <<-- MODIFICADO: Esta parte ahora es más robusta para jugadores que ya están en el servidor -->>
+-- <<-- MODIFICADO: Esta parte ahora es mï¿½s robusta para jugadores que ya estï¿½n en el servidor -->>
 for _, player in ipairs(Players:GetPlayers()) do
 	if not playerBeats[player] then
 		-- Intenta sincronizar con el valor de leaderstats si ya existe.
