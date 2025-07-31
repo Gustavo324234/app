@@ -14,8 +14,7 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 -- Cargar pantallas de carga y estadísticas
-local LoadingScreen = require(game:GetService("StarterGui").LobbyUI.LoadingScreen)
-local RoundStatsScreen = require(game:GetService("StarterGui").LobbyUI.RoundStatsScreen)
+local GameScreens = require(ClientModules.UIModules.GameScreens)
 local ClientModules = script.Parent:WaitForChild("ClientModules")
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
 
@@ -177,32 +176,28 @@ RemoteEvents:WaitForChild("UpdateAbilityUI").OnClientEvent:Connect(function(data
 end)
 RemoteEvents:WaitForChild("ShowMessage").OnClientEvent:Connect(function(message, duration) if hasGuiBeenInitialized then UIController:ShowAnnouncement(message, duration) end end)
 
--- Mostrar pantalla de carga con el nombre del asesino
 local ShowLoadingScreenEvent = RemoteEvents:FindFirstChild("ShowLoadingScreen")
 if ShowLoadingScreenEvent then
 	ShowLoadingScreenEvent.OnClientEvent:Connect(function(killerName)
-		LoadingScreen.SetKillerName(killerName or "?")
-		LoadingScreen.Show()
+		GameScreens.ShowLoadingScreen(killerName or "?")
 	end)
 end
 
--- Ocultar pantalla de carga (puedes llamar a esto desde el servidor cuando termine la carga)
-RemoteEvents:FindFirstChild("HideLoadingScreen")?.OnClientEvent:Connect(function()
-	LoadingScreen.Hide()
+RemoteEvents:WaitForChild("HideLoadingScreen").OnClientEvent:Connect(function()
+	GameScreens.HideLoadingScreen()
 end)
 
--- Mostrar pantalla de estadísticas de ronda
 local ShowRoundStatsScreenEvent = RemoteEvents:FindFirstChild("ShowRoundStatsScreen")
 if ShowRoundStatsScreenEvent then
 	ShowRoundStatsScreenEvent.OnClientEvent:Connect(function(statsText)
-		RoundStatsScreen.SetStats(statsText or "")
-		RoundStatsScreen.Show()
+		GameScreens.ShowRoundStatsScreen(statsText or "", function()
+			RemoteEvents:WaitForChild("ToggleLobbyUI"):FireServer(true)
+		end)
 	end)
 end
 
--- Ocultar pantalla de estadísticas (puedes llamar a esto desde el servidor si quieres forzar el cierre)
-RemoteEvents:FindFirstChild("HideRoundStatsScreen")?.OnClientEvent:Connect(function()
-	RoundStatsScreen.Hide()
+RemoteEvents:WaitForChild("HideRoundStatsScreen").OnClientEvent:Connect(function()
+	GameScreens.HideRoundStatsScreen()
 end)
 RemoteEvents:WaitForChild("PlayerAttack").OnClientEvent:Connect(function(animationName)
 	if player.Character then

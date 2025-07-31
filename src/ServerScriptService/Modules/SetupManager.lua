@@ -29,8 +29,14 @@ function SetupManager.Initialize()
 		"ToggleGameUI",       -- Servidor -> Cliente. Muestra/Oculta la UI principal del juego (habilidades, vida, etc.).
 		"ToggleLobbyUI",      -- Servidor -> Cliente. Muestra/Oculta la UI espec�fica del lobby.
 		"UpdateBeats",        -- Servidor -> Cliente. Actualiza la cantidad de "Beats" (moneda) en la UI del jugador.
-		"UpdateLeaderboardBeats", -- Servidor -> Todos los Clientes. Actualiza los datos de la tabla de clasificaci�n.
-
+		"UpdateLeaderboardBeats", -- Servidor -> Todos los Clientes. Actualiza los datos de la tabla de clasificacion.
+		-- =================================================================
+		-- ==              EVENTOS pantalla de carga                ==
+		-- =================================================================
+		"HideLoadingScreen", -- Servidor -> Todos los Clientes. Oculta la pantalla de carga.
+		"HideRoundStatsScreen", -- Servidor -> Todos los Clientes. Oculta la pantalla de estadísticas de la ronda.
+		"ShowLoadingScreen", -- Servidor -> Todos los Clientes. Muestra la pantalla de carga.
+		"ShowRoundStatsScreen", -- Servidor -> Todos los Clientes. Muestra la
 		-- =================================================================
 		-- ==                 EVENTOS DEL SISTEMA DE HABILIDADES          ==
 		-- =================================================================

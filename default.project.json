@@ -4,19 +4,24 @@
     "$className": "DataModel",
 
     "ReplicatedStorage": {
-        "$path": "src/ReplicatedStorage"
+      "$path": "src/ReplicatedStorage",
+      "RemoteFunctions": {
+        "$className": "Folder",
+        "GetStats": {
+          "$className": "RemoteFunction"
+        },
+        "ObtenerPersonajes": {
+          "$className": "RemoteFunction"
+        }
+      }
     },
 
     "ServerScriptService": {
-        "$path": "src/ServerScriptService"
+      "$path": "src/ServerScriptService"
     },
 
     "ServerStorage": {
-        "$path": "src/ServerStorage"
-    },
-
-    "StarterGui": {
-        "$path": "src/StarterGui"
+      "$path": "src/ServerStorage"
     },
     
     "StarterPlayer": {
@@ -25,26 +30,6 @@
       }
     },
 
-    "Workspace": {
-      "$path": "src/Workspace",
-      "$properties": {
-        "FilteringEnabled": true
-      }
-    },
-
-    "Lighting": {
-      "$properties": {
-        "Ambient": [
-          0,
-          0,
-          0
-        ],
-        "Brightness": 2,
-        "GlobalShadows": true,
-        "Outlines": false,
-        "Technology": "Voxel"
-      }
-    },
     "SoundService": {
       "$properties": {
         "RespectFilteringEnabled": true
