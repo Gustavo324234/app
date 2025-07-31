@@ -14,8 +14,8 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 -- Cargar pantallas de carga y estadísticas
-local GameScreens = require(ClientModules.UIModules.GameScreens)
 local ClientModules = script.Parent:WaitForChild("ClientModules")
+local GameScreens = require(ClientModules.UIModules.GameScreens)
 local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
 
 -- --- CARGAR MÓDULOS ---
