@@ -27,10 +27,11 @@ local ExitSpectatorModeEvent = RemoteEvents:WaitForChild("ExitSpectatorMode")
 local RoundHandler = {}
 
 -- Configuración
-local ROUND_DURATION = 240
-local INTERMISSION_DURATION = 15
-local LOADING_SCREEN_DURATION = 10
-local STATS_SCREEN_DURATION = 20
+local ROUND_DURATION = 20 -- Duración de la ronda en segundos
+local INTERMISSION_DURATION = 15 -- Duración de la intermisión en segundos
+local ROUND_START_DELAY = 5 -- Tiempo de espera antes de iniciar la ronda
+local LOADING_SCREEN_DURATION = 10 -- Duración de la pantalla de carga en segundos
+local STATS_SCREEN_DURATION = 20 -- Duración de la pantalla de estadísticas en segundos
 local currentMap = nil
 local roundActive = false
 
