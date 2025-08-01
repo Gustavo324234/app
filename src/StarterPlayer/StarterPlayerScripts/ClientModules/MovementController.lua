@@ -1,4 +1,4 @@
--- StarterPlayer/StarterPlayerScripts/ClientModules/MovementController.lua (VERSIÓN FINAL Y LIMPIA)
+-- StarterPlayer/StarterPlayerScripts/ClientModules/MovementController.lua (VERSIÓN CORREGIDA Y ROBUSTA)
 
 -- --- SERVICIOS ---
 local Players = game:GetService("Players")
@@ -9,8 +9,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local MovementController = {}
 
 -- --- CONFIGURACIÓN ---
-local NORMAL_SPEED = 16 -- Valor por defecto si no se encuentra en el config
-local SPRINT_SPEED = 28 -- Este valor podría moverse al CharacterConfig en el futuro
+local NORMAL_SPEED = 16
+local SPRINT_SPEED = 28
 local STAMINA_CONSUMPTION_RATE = 20
 local STAMINA_REGEN_RATE = 5
 
@@ -28,6 +28,7 @@ local isStunned = false
 -- --- LÓGICA PRINCIPAL ---
 
 local function onHeartbeat(deltaTime)
+	-- Guardia de seguridad principal: no hacer nada si no hay un humanoide válido.
 	if not (humanoid and humanoid.Health > 0) then return end
 
 	-- El stun tiene la máxima prioridad.
@@ -42,26 +43,35 @@ local function onHeartbeat(deltaTime)
 		humanoid.WalkSpeed = SPRINT_SPEED
 		currentStamina = math.max(0, currentStamina - STAMINA_CONSUMPTION_RATE * deltaTime)
 	else
+		-- --- LÓGICA CORREGIDA Y SIMPLIFICADA ---
+		local baseSpeed = NORMAL_SPEED -- Empezamos con la velocidad normal por defecto.
 		local role = player:GetAttribute("Rol")
-		local charName = player:GetAttribute("Personaje" .. role)
-		local baseSpeed = (role and charName and characterConfig[role] and characterConfig[role][charName]) and characterConfig[role][charName].WalkSpeed or NORMAL_SPEED
-		humanoid.WalkSpeed = baseSpeed
 
+		if role then 
+			local charName = player:GetAttribute("Personaje" .. role)
+			
+			-- Intentamos obtener la velocidad específica del personaje del diccionario.
+			-- Si alguna parte de la ruta no existe, la expresión devolverá 'nil'.
+			local characterSpecificSpeed = characterConfig[role] and characterConfig[role][charName] and characterConfig[role][charName].WalkSpeed
+
+			-- Si encontramos una velocidad específica, la usamos. Si no, baseSpeed mantiene su valor por defecto.
+			if characterSpecificSpeed then
+				baseSpeed = characterSpecificSpeed
+			end
+		end
+		
+		humanoid.WalkSpeed = baseSpeed -- Esta línea ahora es segura porque baseSpeed siempre es un número.
 		currentStamina = math.min(maxStamina, currentStamina + STAMINA_REGEN_RATE * deltaTime)
 	end
 end
 
 -- --- FUNCIONES PÚBLICAS ---
 
--- El MainController llama a esta función cuando el servidor envía la orden de "Stunned".
 function MovementController:ApplyLocalStun(duration)
 	isStunned = true
-	-- El stun se desactiva automáticamente después de la duración.
-	-- No se necesita una función StopLocalStun separada.
 	task.delay(duration, function()
 		isStunned = false
-		-- Detener la animación de acción cuando el stun termine
-		if character then
+		if character and character.Parent then -- Añadida comprobación de seguridad
 			local animateScript = character:FindFirstChild("Animate")
 			if animateScript then
 				local stopActionFunc = animateScript:FindFirstChild("StopActionAnimation")
@@ -73,12 +83,10 @@ function MovementController:ApplyLocalStun(duration)
 	end)
 end
 
--- Permite que otros módulos (como CharacterAnimator) pregunten si el personaje está aturdido.
 function MovementController:IsStunned()
 	return isStunned
 end
 
--- El InputController llama a estas funciones.
 function MovementController:SetSprint(newState)
 	isSprinting = newState
 end
@@ -87,7 +95,6 @@ function MovementController:GetStamina()
 	return currentStamina, maxStamina
 end
 
--- El MainController llama a esta función cuando el personaje aparece.
 function MovementController:InitializeCharacter(_character)
 	character = _character
 	humanoid = character:WaitForChild("Humanoid")

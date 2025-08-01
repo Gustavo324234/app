@@ -11,22 +11,27 @@ local roundStatsScreenGui = playerGui:WaitForChild("RoundStatsScreenGui")
 
 function GameScreens.ShowLoadingScreen(killerName)
     if loadingScreenGui then
-       -- print("[GameScreens] ShowLoadingScreen llamado. GUI encontrada. Intentando activar...") -- PRINT #1
-        
         loadingScreenGui.Enabled = true
-        task.wait() -- Pequeña espera para que la propiedad se procese
         
-       -- print("[GameScreens] 'Enabled' de la GUI es ahora:", loadingScreenGui.Enabled) -- PRINT #2 (Debería decir 'true')
-
-        local killerLabel = loadingScreenGui:FindFirstChild("KillerNameLabel")
-        if killerLabel then
-            killerLabel.Text = killerName or "?"
-            print("[GameScreens] Texto de KillerNameLabel actualizado a:", killerLabel.Text) -- PRINT #3
+        -- --- CÓDIGO CORREGIDO AQUÍ ---
+        -- 1. Primero buscamos el frame principal
+        local backgroundFrame = loadingScreenGui:FindFirstChild("BackgroundFrame")
+        
+        if backgroundFrame then
+            -- 2. LUEGO, buscamos la etiqueta DENTRO del frame
+            local killerLabel = backgroundFrame:FindFirstChild("KillerNameLabel")
+            if killerLabel then
+                killerLabel.Text = killerName or "?"
+            else
+                warn("[GameScreens] ¡ADVERTENCIA! No se encontró 'KillerNameLabel' DENTRO de 'BackgroundFrame'.")
+            end
         else
-            warn("[GameScreens] ¡ADVERTENCIA! No se encontró KillerNameLabel dentro de LoadingScreenGui.")
+            warn("[GameScreens] ¡ADVERTENCIA! No se encontró el 'BackgroundFrame' dentro de 'LoadingScreenGui'.")
         end
+        -- --- FIN DE LA CORRECCIÓN ---
+
     else
-        warn("[GameScreens] ¡ERROR GRAVE! loadingScreenGui es nil. No se puede mostrar.")
+        warn("[GameScreens] ¡ERROR GRAVE! loadingScreenGui es nil.")
     end
 end
 

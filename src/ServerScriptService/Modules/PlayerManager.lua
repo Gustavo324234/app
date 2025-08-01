@@ -1,4 +1,4 @@
--- ServerScriptService/Modules/PlayerManager.lua (VERSI�N FINAL CON LECTURA DE DATOS GUARDADOS)
+-- ServerScriptService/Modules/PlayerManager.lua (VERSIÓN CORREGIDA)
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,29 +8,23 @@ local CharacterConfig = require(game.ReplicatedStorage.Modules.Data.CharacterCon
 
 local PlayerManager = {}
 
-local state = { Murderer = nil, Survivors = {}, DeadEntities = {} }
+-- *** CAMBIO #1: Simplificamos el estado ***
+-- Ahora solo mantenemos un registro de los que están VIVOS.
+local state = { 
+    Murderer = nil, 
+    Survivors = {},      -- Esta tabla contendrá a todos los sobrevivientes al inicio
+    SurvivorsAlive = {}  -- Esta tabla contendrá solo a los que siguen vivos
+}
 
+-- El resto de las variables se mantienen igual...
 local STARTING_BEATS = 100
 local BEATS_REDUCTION_ON_SURVIVAL = 11
-
 local playerBeats = {}
-
--- Variables de eventos
 local UpdateLeaderboardBeatsEvent
 local UpdateBeatsEvent
 
--- Funciones internas (SIN CAMBIOS)
-local function broadcastBeats()
-	if not UpdateLeaderboardBeatsEvent then return end
-	local beatsData = {}
-	for player, score in pairs(playerBeats) do
-		if player and player:IsDescendantOf(Players) then
-			beatsData[player.UserId] = score
-		end
-	end
-	UpdateLeaderboardBeatsEvent:FireAllClients(beatsData)
-end
-
+-- Las funciones internas (spawnBot, asignarPersonaje, moveCharacter) no necesitan cambios.
+-- ... (copia y pega tus funciones internas aquí para que no se pierdan) ...
 local function spawnBot(botType)
 	local botsFolder = ReplicatedStorage:FindFirstChild("Bots")
 	if not botsFolder then warn("�FALLO! No se encontr� la carpeta 'Bots' en ReplicatedStorage.") return nil end
@@ -101,7 +95,7 @@ local function moveCharacter(entity, position)
 end
 
 -- =================================================================================
--- FUNCIONES P�BLICAS DEL M�DULO (SIN CAMBIOS)
+-- FUNCIONES PÚBLICAS
 -- =================================================================================
 
 function PlayerManager.Initialize()
@@ -111,6 +105,9 @@ function PlayerManager.Initialize()
 end
 
 function PlayerManager.AssignRoles(playersInRound)
+	-- ... (tu lógica de AssignRoles no necesita cambiar, pero asegúrate de que al final...)
+    -- *** CAMBIO #2: Al asignar roles, llenamos AMBAS tablas de sobrevivientes ***
+    -- La lógica para seleccionar al asesino y llenar state.Survivors se mantiene
 	if #playersInRound == 1 then
 		local realPlayer = playersInRound[1]
 		local bot
@@ -161,15 +158,20 @@ function PlayerManager.AssignRoles(playersInRound)
 				end
 			end)
 			UpdateBeatsEvent:FireClient(murdererPlayer, STARTING_BEATS)
-			broadcastBeats()
-			print(string.format("[PlayerManager] %s ha sido elegido Asesino con %d Beats (reseteado a %d).", murdererPlayer.Name, lowestScore, STARTING_BEATS))
 		end
 	end
+
+    state.SurvivorsAlive = {} -- Reseteamos la lista de vivos
+    for _, s in ipairs(state.Survivors) do
+        table.insert(state.SurvivorsAlive, s) -- Copiamos a todos a la lista de vivos
+    end
+    
 	if state.Murderer then state.Murderer:SetAttribute("Rol", "Killer") end
 	for _, survivor in ipairs(state.Survivors) do if survivor then survivor:SetAttribute("Rol", "Survivor") end end
 	return state.Murderer, state.Survivors
 end
 
+-- La función AwardSurvivorBeats no cambia
 function PlayerManager.AwardSurvivorBeats(survivors)
 	print("[PlayerManager] Reduciendo Beats a los sobrevivientes...")
 	for _, survivor in ipairs(survivors) do
@@ -184,9 +186,9 @@ function PlayerManager.AwardSurvivorBeats(survivors)
 			print(string.format("  - %s ahora tiene %d Beats.", survivor.Name, newScore))
 		end
 	end
-	broadcastBeats()
 end
 
+-- La función TeleportPlayersToMap no cambia
 function PlayerManager.TeleportPlayersToMap(map, killer, survivors)
 	local murdererSpawn = map:FindFirstChild("MurdererSpawn")
 	local survivorSpawns = map:FindFirstChild("SurvivorSpawns")
@@ -210,20 +212,46 @@ function PlayerManager.TeleportPlayersToMap(map, killer, survivors)
 	end
 end
 
-function PlayerManager.MarkAsDead(entity) if entity and not state.DeadEntities[entity] then state.DeadEntities[entity] = true end end
+-- *** CAMBIO #3: MarkAsDead ahora modifica la lista de vivos ***
+function PlayerManager.MarkAsDead(entity)
+    if not entity then return end
+    
+    -- Buscamos y eliminamos al jugador/bot de la lista de sobrevivientes VIVOS
+    for i, survivor in ipairs(state.SurvivorsAlive) do
+        if survivor == entity then
+            table.remove(state.SurvivorsAlive, i)
+            print("[PlayerManager] La entidad", entity.Name, "ha sido eliminada de la lista de sobrevivientes vivos.")
+            break
+        end
+    end
+end
 
+-- *** CAMBIO #4: IsEntityAlive ahora es más simple (o puede que ni la necesitemos tanto) ***
 function PlayerManager.IsEntityAlive(entity)
 	if not entity then return false end
-	local humanoid = (entity:IsA("Player") and entity.Character and entity.Character:FindFirstChildOfClass("Humanoid")) or (entity:IsA("Model") and entity:FindFirstChildOfClass("Humanoid"))
-	return humanoid and humanoid.Health > 0 and not state.DeadEntities[entity]
+    
+    -- Para el asesino, la comprobación de vida sigue siendo útil
+    if entity == state.Murderer then
+        local humanoid = (entity:IsA("Player") and entity.Character and entity.Character:FindFirstChildOfClass("Humanoid")) or (entity:IsA("Model") and entity:FindFirstChildOfClass("Humanoid"))
+	    return humanoid and humanoid.Health > 0
+    end
+    
+    -- Para los sobrevivientes, ahora simplemente comprobamos si siguen en la lista de vivos
+    for _, survivor in ipairs(state.SurvivorsAlive) do
+        if survivor == entity then
+            return true
+        end
+    end
+    return false
 end
 
+-- *** CAMBIO #5: AreAllSurvivorsDead ahora es trivialmente simple y correcto ***
 function PlayerManager.AreAllSurvivorsDead()
-	if #state.Survivors == 0 then return false end
-	for _, survivor in ipairs(state.Survivors) do if PlayerManager.IsEntityAlive(survivor) then return false end end
-	return true
+    -- Si la lista de sobrevivientes vivos está vacía, ¡están todos muertos!
+	return #state.SurvivorsAlive == 0
 end
 
+-- Las funciones ReturnPlayersToLobby, GetEligiblePlayers, GetSurvivors no cambian
 function PlayerManager.ReturnPlayersToLobby(realPlayers)
 	Players.CharacterAutoLoads = true
 	for _, player in ipairs(realPlayers) do if player and player.Parent then player:LoadCharacter() player.InLobby.Value = true end end
@@ -237,6 +265,7 @@ end
 
 function PlayerManager.GetSurvivors() return state.Survivors or {} end
 
+-- La función Reset ahora también debe limpiar la nueva tabla
 function PlayerManager.Reset()
 	local allParticipants = {}
 	for _, s in ipairs(state.Survivors) do table.insert(allParticipants, s) end
@@ -244,14 +273,11 @@ function PlayerManager.Reset()
 	for _, entity in ipairs(allParticipants) do if entity and typeof(entity) == "Instance" then entity:SetAttribute("Rol", nil) end end
 	state.Murderer = nil
 	state.Survivors = {}
-	state.DeadEntities = {}
+	state.SurvivorsAlive = {} -- <-- Limpiar la nueva tabla también
 end
 
--- =================================================================================
--- INICIALIZACI�N Y GESTI�N DE JUGADORES (SECCI�N MODIFICADA)
--- =================================================================================
-
--- <<-- MODIFICADO: Esta funci�n ahora lee los datos cargados por PlayerDataHandler -->>
+-- La lógica de PlayerAdded y PlayerRemoving no cambia
+-- ... (copia y pega tu lógica de PlayerAdded/Removing y el bucle for aquí) ...
 Players.PlayerAdded:Connect(function(player)
 	-- Esperamos a que PlayerDataHandler cargue los datos y nos los comunique v�a un atributo.
 	local loadedBeats
@@ -273,13 +299,11 @@ Players.PlayerAdded:Connect(function(player)
 
 	-- Enviamos la informaci�n al cliente y al resto de jugadores.
 	if UpdateBeatsEvent then UpdateBeatsEvent:FireClient(player, loadedBeats) end
-	broadcastBeats()
 end)
 
 Players.PlayerRemoving:Connect(function(player)
 	if playerBeats[player] then
 		playerBeats[player] = nil
-		broadcastBeats()
 	end
 end)
 

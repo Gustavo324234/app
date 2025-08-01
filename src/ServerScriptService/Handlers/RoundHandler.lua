@@ -109,7 +109,9 @@ function RoundHandler:startRound(playersInRound, realPlayers)
 	end
 	AnnounceMessage:FireAllClients("The round has started!")
 
-    -- *** ESTA ES LA PARTE QUE NO REPETÍ EN LA EXPLICACIÓN, PERO SÍ ESTÁ EN EL CÓDIGO ***
+    -- =============================================================
+    -- BUCLE DE RONDA CON DEPURACIÓN AÑADIDA
+    -- =============================================================
 	local timeLeft = ROUND_DURATION
 	local roundEnded = false
 	local killerWon = false
@@ -117,18 +119,36 @@ function RoundHandler:startRound(playersInRound, realPlayers)
 		task.wait(1)
 		timeLeft -= 1
 		UpdateTimer:FireAllClients("Time Left", timeLeft)
-		if PlayerManager.AreAllSurvivorsDead() then
+
+        -- --- BLOQUE DE DEPURACIÓN ---
+        local allSurvivorsDead = PlayerManager.AreAllSurvivorsDead()
+        local killerIsAlive = PlayerManager.IsEntityAlive(killer)
+        
+        -- Este print te dirá en cada segundo el estado de la partida
+        print("[RoundHandler DEBUG] Segundos:", timeLeft, "| Sobrevivientes muertos?:", allSurvivorsDead, "| Asesino vivo?:", killerIsAlive)
+
+		if allSurvivorsDead then
+            print("[RoundHandler] ¡CONDICIÓN DE VICTORIA! Todos los sobrevivientes están muertos.")
 			roundEnded = true; killerWon = true
-		elseif not PlayerManager.IsEntityAlive(killer) then
+		elseif not killerIsAlive then
+            print("[RoundHandler] ¡CONDICIÓN DE VICTORIA! El asesino ha sido eliminado.")
 			roundEnded = true; killerWon = false
 		end
 	end
 
+    print("[RoundHandler] El bucle de la ronda ha terminado. Razón:", roundEnded and "Condición de victoria cumplida" or "Tiempo agotado")
+
+	-- =============================================================
+	-- LÓGICA DE FIN DE RONDA (Ahora debería ejecutarse)
+	-- =============================================================
 	RewardManager.GiveRewards(killer, survivors, killerWon)
 	PlayerManager.AwardSurvivorBeats(survivors)
 
 	local statsText = killerWon and "¡El asesino ganó!" or "¡Los sobrevivientes ganaron!"
-	ShowRoundStatsScreenEvent:FireAllClients(statsText)
+	
+    print("[RoundHandler] DISPARANDO ShowRoundStatsScreen...")
+    ShowRoundStatsScreenEvent:FireAllClients(statsText)
+
 	task.wait(STATS_SCREEN_DURATION)
 	HideRoundStatsScreenEvent:FireAllClients()
 
