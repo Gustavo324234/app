@@ -1,24 +1,29 @@
--- StarterPlayer/StarterPlayerScripts/MainController_Client.lua (VERSIÓN FINAL CON LÓGICA RESTAURADA final)
-
 print("--- MainController v17.0 FINAL --- INICIANDO")
 
--- --- SERVICIOS Y REFERENCIAS ---
+-- =================================================================
+--                        SERVICIOS Y REFERENCIAS
+-- =================================================================
+
+-- Servicios de Roblox
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local StarterGui = game:GetService("StarterGui")
 
-pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, false) end)
-
+-- Variables Locales
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Cargar pantallas de carga y estadísticas
+-- Ocultar la UI de vida por defecto de Roblox
+pcall(function() StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, false) end)
+
+-- =================================================================
+--                        CARGA DE MÓDULOS
+-- =================================================================
+
+-- Módulos del Cliente
 local ClientModules = script.Parent:WaitForChild("ClientModules")
 local GameScreens = require(ClientModules.UIModules.GameScreens)
-local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
-
--- --- CARGAR MÓDULOS ---
 local PlatformService = require(ClientModules.PlatformService)
 local InputController = require(ClientModules.InputController)
 local MovementController = require(ClientModules.MovementController)
@@ -28,28 +33,39 @@ local BuffDebuffDisplay = require(ClientModules.UIModules.BuffDebuffDisplay)
 local AnimationController = require(ClientModules.AnimationController)
 local AbilityFXController = require(ClientModules.AbilityFXController)
 
--- --- ESTADO ---
+-- Eventos Remotos
+local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
+
+-- =================================================================
+--                        ESTADO Y FUNCIONES LOCALES
+-- =================================================================
+
 local hasGuiBeenInitialized = false
 local buffDebuffFrame = nil
 
--- La función de feedback de transparencia no cambia.
+-- Función para feedback visual en botones
 local function applyPressTransparency(button)
 	local originalTransparency
 	button.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
 			originalTransparency = button.ImageTransparency
 			button.ImageTransparency = originalTransparency + 0.3
-		-- Mostrar la lista de buffs/debuffs al iniciar el juego
-		if not buffDebuffFrame then
-			buffDebuffFrame = BuffDebuffDisplay:CreateGui()
+			--[[
+				NOTA: El código de BuffDebuffDisplay estaba aquí dentro, lo cual parecía un error.
+				Lo he comentado. Si era intencional, puedes descomentarlo.
+			--
+			-- Mostrar la lista de buffs/debuffs al iniciar el juego
+			if not buffDebuffFrame then
+				buffDebuffFrame = BuffDebuffDisplay:CreateGui()
+			end
+			-- Ejemplo de efectos iniciales (debes actualizar esto según el estado real del jugador)
+			local exampleEffects = {
+				{name = "Bendición Solar", value = "+30%", isBuff = true, icon = "rbxassetid://123456"},
+				{name = "Pánico", value = "-20%", isBuff = false, icon = "rbxassetid://654321"}
+			}
+			BuffDebuffDisplay:UpdateList(buffDebuffFrame, exampleEffects)
+			]]
 		end
-		-- Ejemplo de efectos iniciales (debes actualizar esto según el estado real del jugador)
-		local exampleEffects = {
-			{name = "Bendición Solar", value = "+30%", isBuff = true, icon = "rbxassetid://123456"},
-			{name = "Pánico", value = "-20%", isBuff = false, icon = "rbxassetid://654321"}
-		}
-		BuffDebuffDisplay:UpdateList(buffDebuffFrame, exampleEffects)
-	end
 	end)
 	button.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -58,8 +74,10 @@ local function applyPressTransparency(button)
 	end)
 end
 
+-- =================================================================
+--                        LÓGICA DE INICIALIZACIÓN
+-- =================================================================
 
--- --- LÓGICA DE INICIALIZACIÓN Y PERSONAJE ---
 local function onCharacterAdded(character)
 	print("[MainController] Evento onCharacterAdded disparado para:", character.Name)
 
@@ -67,6 +85,8 @@ local function onCharacterAdded(character)
 	if not hasGuiBeenInitialized then
 		hasGuiBeenInitialized = true
 		print("[MainController] Primera aparición de personaje. Inicializando UI...")
+		
+		-- Creación de la tabla de referencias de UI
 		local references = {}
 		references.PlayerGui = playerGui
 		references.PlatformService = PlatformService
@@ -79,7 +99,6 @@ local function onCharacterAdded(character)
 		references.AbilitySlots = references.AbilityGui:WaitForChild("AbilitySlots")
 		references.AbilityTemplate = references.AbilityGui:WaitForChild("AbilityTemplate")
 
-		-- Lógica correcta para la nueva estructura de botones
 		local mobileContainer = references.AbilityGui:FindFirstChild("MobileButtonsContainer")
 		if mobileContainer then
 			references.SprintButton = mobileContainer:FindFirstChild("SprintButton")
@@ -97,13 +116,12 @@ local function onCharacterAdded(character)
 		local staminaBarBG = statusContainer:WaitForChild("StaminaBarBG")
 		references.StaminaBar = staminaBarBG:WaitForChild("StaminaBarFill")
 		references.StaminaText = staminaBarBG:WaitForChild("StaminaText")
+		
 		UIController:Initialize(references)
 
-		-- Conexión de feedback a los botones
 		if references.SprintButton then applyPressTransparency(references.SprintButton) end
 		if references.AttackButton then applyPressTransparency(references.AttackButton) end
 
-		-- Conexión de lógica de botones táctiles
 		if PlatformService:IsMobile() then
 			print("[MainController] Dispositivo móvil detectado. Conectando lógica de botones táctiles...")
 			if references.SprintButton then
@@ -120,7 +138,7 @@ local function onCharacterAdded(character)
 		end
 	end
 
-	-- 2. La lógica de conexión de módulos al personaje no cambia.
+	-- 2. Conectar módulos al personaje (se hace cada vez que el personaje aparece)
 	local inLobbyValue = player:WaitForChild("InLobby")
 	if inLobbyValue and inLobbyValue.Value == true then return end
 
@@ -128,22 +146,23 @@ local function onCharacterAdded(character)
 	UIController:ConnectCharacter(character)
 end
 
--- --- INICIALIZACIÓN DE MÓDULOS BÁSICOS ---
+-- =================================================================
+--                        CONEXIÓN DE EVENTOS
+-- =================================================================
+
+print("[MainController] Conectando eventos del servidor...")
+
+-- --- INICIALIZACIÓN DE MÓDULOS BÁSICOS (se hace una sola vez) ---
 PlatformService:Initialize()
 InputController:Initialize(MovementController)
 AbilityController:Initialize()
 
--- [[ CÓDIGO RESTAURADO ]] --
--- --- CONEXIÓN DE EVENTOS (SE HACE UNA SOLA VEZ) ---
-print("[MainController] Conectando eventos del servidor...")
+-- --- CONEXIONES A EVENTOS REMOTOS ---
+
 RemoteEvents:WaitForChild("ApplyState").OnClientEvent:Connect(function(state, duration)
-	-- Solo nos importa la orden de empezar el stun.
 	if state == "Stunned" then
-		-- Le pasamos la duración al MovementController, y él se encargará
-		-- de detener el stun automáticamente cuando el tiempo termine.
 		MovementController:ApplyLocalStun(duration)
 	elseif state == "Unstunned" then
-		-- Detener manualmente la animación de acción si es necesario
 		if player.Character then
 			local animateScript = player.Character:FindFirstChild("Animate")
 			if animateScript then
@@ -155,7 +174,9 @@ RemoteEvents:WaitForChild("ApplyState").OnClientEvent:Connect(function(state, du
 		end
 	end
 end)
+
 RemoteEvents:WaitForChild("UpdateTimer").OnClientEvent:Connect(function(type, value) if hasGuiBeenInitialized then UIController:UpdateTimer(type, value) end end)
+
 RemoteEvents:WaitForChild("ToggleGameUI").OnClientEvent:Connect(function(isVisible)
 	if hasGuiBeenInitialized then
 		UIController:ToggleGameUI(isVisible)
@@ -163,56 +184,67 @@ RemoteEvents:WaitForChild("ToggleGameUI").OnClientEvent:Connect(function(isVisib
 		UIController:UpdateJumpState(canJump, player.Character)
 	end
 end)
-RemoteEvents:WaitForChild("ToggleLobbyUI").OnClientEvent:Connect(function(isVisible) if hasGuiBeenInitialized then local lobbyUI = playerGui:FindFirstChild("LobbyUI") if lobbyUI then lobbyUI.Enabled = isVisible end end end)
+
+RemoteEvents:WaitForChild("ToggleLobbyUI").OnClientEvent:Connect(function(isVisible) 
+	if hasGuiBeenInitialized then 
+		local lobbyUI = playerGui:FindFirstChild("LobbyUI") 
+		if lobbyUI then 
+			lobbyUI.Enabled = isVisible 
+		end 
+	end 
+end)
+
 RemoteEvents:WaitForChild("UpdateAbilityUI").OnClientEvent:Connect(function(data) 
 	if hasGuiBeenInitialized then 
-		AbilityController:ProcessServerUpdate(data) -- Llama a la nueva función unificada
-
-		-- Solo volvemos a dibujar todos los botones si recibimos la lista completa.
+		AbilityController:ProcessServerUpdate(data)
 		if type(data) == "table" and not data.type then
 			UIController:DrawAbilityButtons(data)
 		end
 	end 
 end)
+
 RemoteEvents:WaitForChild("ShowMessage").OnClientEvent:Connect(function(message, duration) if hasGuiBeenInitialized then UIController:ShowAnnouncement(message, duration) end end)
 
-local ShowLoadingScreenEvent = RemoteEvents:FindFirstChild("ShowLoadingScreen")
-if ShowLoadingScreenEvent then
-	ShowLoadingScreenEvent.OnClientEvent:Connect(function(killerName)
-		GameScreens.ShowLoadingScreen(killerName or "?")
-	end)
-end
+-- *** CORRECCIÓN PRINCIPAL APLICADA AQUÍ ***
+-- Conexiones a las pantallas de carga y estadísticas.
+-- Se usa WaitForChild para garantizar que la conexión siempre ocurra.
+
+RemoteEvents:WaitForChild("ShowLoadingScreen").OnClientEvent:Connect(function(killerName)
+	GameScreens.ShowLoadingScreen(killerName or "?")
+end)
 
 RemoteEvents:WaitForChild("HideLoadingScreen").OnClientEvent:Connect(function()
 	GameScreens.HideLoadingScreen()
 end)
 
-local ShowRoundStatsScreenEvent = RemoteEvents:FindFirstChild("ShowRoundStatsScreen")
-if ShowRoundStatsScreenEvent then
-	ShowRoundStatsScreenEvent.OnClientEvent:Connect(function(statsText)
-		GameScreens.ShowRoundStatsScreen(statsText or "", function()
-			RemoteEvents:WaitForChild("ToggleLobbyUI"):FireServer(true)
-		end)
+RemoteEvents:WaitForChild("ShowRoundStatsScreen").OnClientEvent:Connect(function(statsText)
+	GameScreens.ShowRoundStatsScreen(statsText or "", function()
+		RemoteEvents:WaitForChild("ToggleLobbyUI"):FireServer(true)
 	end)
-end
+end)
 
 RemoteEvents:WaitForChild("HideRoundStatsScreen").OnClientEvent:Connect(function()
 	GameScreens.HideRoundStatsScreen()
 end)
+
 RemoteEvents:WaitForChild("PlayerAttack").OnClientEvent:Connect(function(animationName)
 	if player.Character then
 		AnimationController:PlayAnimation(player.Character, animationName)
 	end
 end)
+
 RemoteEvents:WaitForChild("AbilityUsed").OnClientEvent:Connect(function(character, abilityName, effectType, role, charName)
 	print("[MainController] Recibido AbilityUsed. Pasando orden a FXController con datos:", role, charName)
 	if character and hasGuiBeenInitialized then
-		AbilityFXController:ProcessEffectBlueprint(character, abilityName, effectType, role, charName) -- <-- Le pasamos los nuevos datos
+		AbilityFXController:ProcessEffectBlueprint(character, abilityName, effectType, role, charName)
 	end
 end)
--- [[ FIN DEL CÓDIGO RESTAURADO ]] --
 
--- --- LÓGICA PARA MANEJAR EL CAMBIO DE ROL ---
+-- =================================================================
+--                        LÓGICA ADICIONAL
+-- =================================================================
+
+-- Función para manejar el cambio de rol
 local function onRoleChanged()
 	local currentRole = player:GetAttribute("Rol")
 	if hasGuiBeenInitialized then
@@ -221,7 +253,7 @@ local function onRoleChanged()
 end
 player:GetAttributeChangedSignal("Rol"):Connect(onRoleChanged)
 
--- --- BUCLE DE ACTUALIZACIÓN ---
+-- Bucle de actualización para elementos dinámicos
 RunService.Heartbeat:Connect(function()
 	if not hasGuiBeenInitialized then return end
 	local stamina, maxStamina = MovementController:GetStamina()
@@ -230,12 +262,16 @@ RunService.Heartbeat:Connect(function()
 	UIController:UpdateAbilityCooldowns(abilitiesState)
 end)
 
--- --- CONEXIÓN PRINCIPAL ---
+-- =================================================================
+--                        CONEXIÓN PRINCIPAL AL PERSONAJE
+-- =================================================================
+
 player.CharacterAdded:Connect(onCharacterAdded)
 if player.Character then
+	task.wait(1) -- Pequeña espera para asegurar que todo esté listo
 	onCharacterAdded(player.Character)
 end
 
-onRoleChanged()
+onRoleChanged() -- Llamada inicial para establecer la visibilidad correcta del botón
 
 print("[MainController] Cerebro del cliente listo.")
