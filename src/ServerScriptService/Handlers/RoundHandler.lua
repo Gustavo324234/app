@@ -53,17 +53,50 @@ function RoundHandler:startRound(playersInRound, realPlayers)
 	roundActive = true
 	Players.CharacterAutoLoads = false
 
-	currentMap = MapManager.LoadRandomMap()
-	if not currentMap then warn("[RoundHandler] No se pudo cargar mapa.") return end
-
+	-- 1. Se eligen los roles, pero NO se hace nada con ellos todavía.
 	local killer, survivors = PlayerManager.AssignRoles(realPlayers)
 	
-	print("[RoundHandler] DISPARANDO ShowLoadingScreen. Asesino:", killer and killer.Name or "N/A")
+	if not killer or #survivors == 0 then
+		warn("[RoundHandler] No hay suficientes participantes. Cancelando ronda antes de empezar.")
+		PlayerManager.Reset()
+		PlayerManager.ReturnPlayersToLobby(realPlayers)
+		roundActive = false
+		return
+	end
+
+	-- 2. INMEDIATAMENTE se muestra la pantalla de carga a todos los jugadores.
+	-- Ahora están a ciegas y no ven lo que pasa detrás.
+	print("[RoundHandler] Fase 1: Mostrando pantalla de carga.")
 	ShowLoadingScreenEvent:FireAllClients(killer and killer.Name or "?")
 	
-	if not killer or #survivors == 0 then
-		warn("[RoundHandler] No hay suficientes participantes.")
-		task.wait(LOADING_SCREEN_DURATION)
+	-- 3. MIENTRAS la pantalla de carga está activa, preparamos todo el escenario.
+	-- Usamos un pcall para capturar cualquier error durante la preparación.
+	local success, err = pcall(function()
+		print("[RoundHandler] Fase 2: Preparando el escenario (mapa y personajes)...")
+
+		-- 3a. Se carga el mapa.
+		currentMap = MapManager.LoadRandomMap()
+		if not currentMap then
+			-- Si el mapa no carga, lanzamos un error para que el pcall lo capture.
+			error("No se pudo cargar ningún mapa.") 
+		end
+
+		-- 3b. Se asignan los personajes y se teletransporta a TODOS a la vez.
+		-- PlayerManager debería manejar la creación y teletransporte de los personajes.
+		PlayerManager.TeleportPlayersToMap(currentMap, killer, survivors)
+		
+		-- 3c. Se asignan las habilidades ahora que los personajes existen en el mapa.
+		if killer:IsA("Player") then killer:SetAttribute("PersonajeKiller", "Bacon Hair") end
+		for _, player in ipairs(realPlayers) do 
+			AbilityHandler.GiveAbilities(player) 
+		end
+		
+		print("[RoundHandler] Fase 2: Escenario preparado con éxito.")
+	end)
+
+	if not success then
+		warn("[RoundHandler] ¡ERROR GRAVE DURANTE LA PREPARACIÓN DE LA RONDA!", err)
+		-- Lógica de limpieza en caso de fallo
 		HideLoadingScreenEvent:FireAllClients()
 		cleanupMap()
 		PlayerManager.Reset()
@@ -71,20 +104,15 @@ function RoundHandler:startRound(playersInRound, realPlayers)
 		roundActive = false
 		return
 	end
-
+	
+	-- 4. Esperamos el tiempo definido para la pantalla de carga.
 	task.wait(LOADING_SCREEN_DURATION)
 
-	if killer:IsA("Player") then killer:SetAttribute("PersonajeKiller", "Bacon Hair") end
-	for _, survivor in ipairs(survivors) do
-		if survivor:IsA("Player") then survivor:SetAttribute("PersonajeSurvivor", "Noob") end
-	end
-
-	for _, player in ipairs(realPlayers) do AbilityHandler.GiveAbilities(player) end
-	PlayerManager.TeleportPlayersToMap(currentMap, killer, survivors)
-	
-	print("[RoundHandler] DISPARANDO HideLoadingScreen.")
+	-- 5. Se quita la pantalla de carga. ¡El juego empieza!
+	print("[RoundHandler] Fase 3: Ocultando pantalla de carga e iniciando la ronda.")
 	HideLoadingScreenEvent:FireAllClients()
 
+	-- 6. Se activa la UI del juego y se conectan los eventos de muerte.
 	for _, p in ipairs(playersInRound) do
 		if p:IsA("Player") then 
 			p.InLobby.Value = false 
@@ -92,9 +120,10 @@ function RoundHandler:startRound(playersInRound, realPlayers)
 			ToggleLobbyUIEvent:FireClient(p, false)
 		end
 	end
-
+	
 	for _, entity in ipairs(playersInRound) do
-		local humanoid = (entity:IsA("Player") and entity.Character and entity.Character:FindFirstChildOfClass("Humanoid")) or (entity:IsA("Model") and entity:FindFirstChildOfClass("Humanoid"))
+		-- ... (tu lógica de conexión de humanoid.Died se mantiene igual) ...
+        local humanoid = (entity:IsA("Player") and entity.Character and entity.Character:FindFirstChildOfClass("Humanoid")) or (entity:IsA("Model") and entity:FindFirstChildOfClass("Humanoid"))
 		if humanoid then
 			humanoid.Died:Once(function()
 				PlayerManager.MarkAsDead(entity)
@@ -103,52 +132,34 @@ function RoundHandler:startRound(playersInRound, realPlayers)
 		end
 	end
 
+	-- 7. Se envían los mensajes de inicio de ronda.
 	if killer:IsA("Player") then MessageManager.SendToPlayer(killer, "You are the KILLER!") end
 	for _, survivor in ipairs(survivors) do
 		if survivor:IsA("Player") then MessageManager.SendToPlayer(survivor, "You are a SURVIVOR!") end
 	end
 	AnnounceMessage:FireAllClients("The round has started!")
 
-    -- =============================================================
-    -- BUCLE DE RONDA CON DEPURACIÓN AÑADIDA
-    -- =============================================================
+    -- 8. El bucle de la ronda comienza.
 	local timeLeft = ROUND_DURATION
-	local roundEnded = false
+    -- ... (el resto de la función, incluyendo el bucle while y la lógica de fin de ronda, se mantiene igual que en tu código original) ...
+    local roundEnded = false
 	local killerWon = false
 	while timeLeft > 0 and not roundEnded do
 		task.wait(1)
 		timeLeft -= 1
 		UpdateTimer:FireAllClients("Time Left", timeLeft)
-
-        -- --- BLOQUE DE DEPURACIÓN ---
-        local allSurvivorsDead = PlayerManager.AreAllSurvivorsDead()
-        local killerIsAlive = PlayerManager.IsEntityAlive(killer)
-        
-        -- Este print te dirá en cada segundo el estado de la partida
-        print("[RoundHandler DEBUG] Segundos:", timeLeft, "| Sobrevivientes muertos?:", allSurvivorsDead, "| Asesino vivo?:", killerIsAlive)
-
-		if allSurvivorsDead then
-            print("[RoundHandler] ¡CONDICIÓN DE VICTORIA! Todos los sobrevivientes están muertos.")
+		if PlayerManager.AreAllSurvivorsDead() then
 			roundEnded = true; killerWon = true
-		elseif not killerIsAlive then
-            print("[RoundHandler] ¡CONDICIÓN DE VICTORIA! El asesino ha sido eliminado.")
+		elseif not PlayerManager.IsEntityAlive(killer) then
 			roundEnded = true; killerWon = false
 		end
 	end
 
-    print("[RoundHandler] El bucle de la ronda ha terminado. Razón:", roundEnded and "Condición de victoria cumplida" or "Tiempo agotado")
-
-	-- =============================================================
-	-- LÓGICA DE FIN DE RONDA (Ahora debería ejecutarse)
-	-- =============================================================
 	RewardManager.GiveRewards(killer, survivors, killerWon)
 	PlayerManager.AwardSurvivorBeats(survivors)
 
 	local statsText = killerWon and "¡El asesino ganó!" or "¡Los sobrevivientes ganaron!"
-	
-    print("[RoundHandler] DISPARANDO ShowRoundStatsScreen...")
-    ShowRoundStatsScreenEvent:FireAllClients(statsText)
-
+	ShowRoundStatsScreenEvent:FireAllClients(statsText)
 	task.wait(STATS_SCREEN_DURATION)
 	HideRoundStatsScreenEvent:FireAllClients()
 
@@ -168,7 +179,6 @@ function RoundHandler:startRound(playersInRound, realPlayers)
 	PlayerManager.ReturnPlayersToLobby(realPlayers)
 	roundActive = false
 end
-
 -- La única función pública que el GameManager llamará
 function RoundHandler.StartGameLoop()
 	print("[RoundHandler] Iniciando bucle de juego...")
