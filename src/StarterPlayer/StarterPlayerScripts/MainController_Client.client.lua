@@ -59,28 +59,22 @@ local uiReferences = {} -- Almacenará todas las referencias a las GUIs una sola
 
 -- Función para inicializar y obtener todas las referencias de UI
 local function initializeGuiReferences()
-	if hasGuiBeenInitialized then return end -- Solo se ejecuta una vez
-
+	if hasGuiBeenInitialized then return end
 	print("[MainController] Inicializando referencias de UI del juego...")
 
-	-- Referencias a ScreenGuis principales (deben tener ResetOnSpawn = false)
 	uiReferences.PlayerGui = playerGui
-	uiReferences.PlatformService = PlatformService -- Esto no es una UI, pero se pasó antes
-	
-	-- Todas estas GUIs deben existir como ScreenGuis en StarterGui con ResetOnSpawn = false
+	uiReferences.PlatformService = PlatformService
 	uiReferences.AbilityGui = playerGui:WaitForChild("AbilityGui")
 	uiReferences.PlayerStatusGui = playerGui:WaitForChild("PlayerStatusGui")
 	uiReferences.RoundInfoGui = playerGui:WaitForChild("RoundInfoGui")
 	uiReferences.AnnouncementGui = playerGui:WaitForChild("AnnouncementGui")
-	uiReferences.LobbyUI = playerGui:WaitForChild("LobbyUI") -- Asumiendo que LobbyUI también es una ScreenGui persistente.
+	uiReferences.LobbyUI = playerGui:WaitForChild("LobbyUI")
 
-	-- Referencias a elementos dentro de las GUIs
 	uiReferences.TimerLabel = uiReferences.RoundInfoGui:WaitForChild("TimerLabel")
 	uiReferences.AnnouncementLabel = uiReferences.AnnouncementGui:WaitForChild("AnnouncementLabel")
 	uiReferences.AbilitySlots = uiReferences.AbilityGui:WaitForChild("AbilitySlots")
 	uiReferences.AbilityTemplate = uiReferences.AbilityGui:WaitForChild("AbilityTemplate")
 
-	-- Lógica para botones móviles (buscando dentro de AbilityGui)
 	local mobileContainer = uiReferences.AbilityGui:FindFirstChild("MobileButtonsContainer")
 	if mobileContainer then
 		uiReferences.SprintButton = mobileContainer:FindFirstChild("SprintButton")
@@ -90,7 +84,6 @@ local function initializeGuiReferences()
 		uiReferences.AttackButton = uiReferences.AbilityGui:FindFirstChild("AttackButton")
 	end
 
-	-- Referencias para PlayerStatusGui
 	local statusContainer = uiReferences.PlayerStatusGui:WaitForChild("StatusContainer")
 	uiReferences.CharacterIcon = statusContainer:WaitForChild("CharacterIcon")
 	local healthBarBG = statusContainer:WaitForChild("HealthBarBG")
@@ -100,14 +93,13 @@ local function initializeGuiReferences()
 	uiReferences.StaminaBar = staminaBarBG:WaitForChild("StaminaBarFill")
 	uiReferences.StaminaText = staminaBarBG:WaitForChild("StaminaText")
 	
-	-- Inicializar UIController con todas las referencias
 	UIController:Initialize(uiReferences)
+    -- Ahora que LobbyController está definido, esta línea funcionará perfectamente.
  	LobbyController:Initialize(uiReferences.LobbyUI)
-	-- Conexión de feedback a los botones (si existen)
+	
 	if uiReferences.SprintButton then applyPressTransparency(uiReferences.SprintButton) end
 	if uiReferences.AttackButton then applyPressTransparency(uiReferences.AttackButton) end
 
-	-- Lógica de botones táctiles (basada en PlatformService)
 	if PlatformService:IsMobile() then
 		print("[MainController] Dispositivo móvil detectado. Conectando lógica de botones táctiles...")
 		if uiReferences.SprintButton then
@@ -133,14 +125,21 @@ end
 local function onCharacterAdded(character)
 	print("[MainController] Evento onCharacterAdded disparado para:", character.Name)
 
-	-- Inicializar las referencias de la UI solo la primera vez que aparece el personaje.
-	-- Esto llama a initializeGuiReferences()
-	initializeGuiReferences() 
+	initializeGuiReferences()
 
-	-- Lógica que SÍ depende del personaje
+	-- [[ LA LÓGICA DE ESTADO INICIAL ]]
 	local inLobbyValue = player:WaitForChild("InLobby")
-	if inLobbyValue and inLobbyValue.Value == true then return end
+	
+	-- Le decimos a la Sidebar del LobbyController si debe ser visible o no
+	-- basándonos en el estado actual del jugador.
+	LobbyController:SetSidebarVisible(inLobbyValue.Value)
 
+	if inLobbyValue.Value == true then
+		-- Si estamos en el lobby, no hacemos nada más.
+		return
+	end
+
+	-- Si NO estamos en el lobby (estamos en ronda), continuamos con la inicialización del personaje.
 	MovementController:InitializeCharacter(character)
 	UIController:ConnectCharacter(character)
 end

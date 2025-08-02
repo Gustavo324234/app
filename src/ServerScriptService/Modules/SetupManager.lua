@@ -36,7 +36,8 @@ function SetupManager.Initialize()
 		"HideLoadingScreen", -- Servidor -> Todos los Clientes. Oculta la pantalla de carga.
 		"HideRoundStatsScreen", -- Servidor -> Todos los Clientes. Oculta la pantalla de estadísticas de la ronda.
 		"ShowLoadingScreen", -- Servidor -> Todos los Clientes. Muestra la pantalla de carga.
-		"ShowRoundStatsScreen", -- Servidor -> Todos los Clientes. Muestra la
+		"ShowRoundStatsScreen", -- Servidor -> Todos los Clientes. Muestra la pantalla de estadísticas de la ronda.
+		"RequestReturnToLobby", -- Cliente -> Servidor. El jugador solicita volver al lobby.
 		-- =================================================================
 		-- ==                 EVENTOS DEL SISTEMA DE HABILIDADES          ==
 		-- =================================================================

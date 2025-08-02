@@ -237,5 +237,5 @@ function RoundHandler.StartGameLoop()
 		end
 	end
 end
-
+RequestReturnToLobbyEvent.OnServerEvent:Connect(onPlayerRequestReturnToLobby)
 return RoundHandler

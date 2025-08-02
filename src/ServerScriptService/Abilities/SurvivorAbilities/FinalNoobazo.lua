@@ -1,11 +1,10 @@
-local MoonsPresence = require(game:GetService("ServerScriptService").Abilities.KillerAbilities.MoonsPresence)
--- ServerScriptService/Abilities/SurvivorAbilities/FinalNoobazo.lua (CORREGIDO)
+-- ServerScriptService/Abilities/SurvivorAbilities/FinalNoobazo.lua (REFRACTORIZADO)
 
-local FinalNoobazo = {}
-
+local EffectManager = require(game:GetService("ServerScriptService").Modules.EffectManager)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CharacterConfig = require(ReplicatedStorage.Modules.Data.CharacterConfig)
 
+local FinalNoobazo = {}
 FinalNoobazo.Type = "Active"
 FinalNoobazo.Name = "FinalNoobazo"
 FinalNoobazo.DisplayName = "Noobazo Final"
@@ -25,9 +24,7 @@ function FinalNoobazo.GetCooldown(player)
 end
 
 function FinalNoobazo.Execute(player)
-	-- [[ CORRECCI�N ]] Movemos la lectura de la configuraci�n aqu� dentro.
 	local ABILITY_CONFIG = CharacterConfig.Survivor.Noob.AbilityStats.FinalNoobazo
-
 	if activeUltimates[player] then return false end
 
 	local character = player.Character
@@ -42,24 +39,21 @@ function FinalNoobazo.Execute(player)
 
 	player:SetAttribute("UltimateDamageReduction", ABILITY_CONFIG.DamageReduction)
 	player:SetAttribute("IsImmuneToCC", true)
-	-- Mostrar el buff en la GUI
+
 	local effectData = {
 		name = "Noobazo Final",
 		value = string.format("-%d%% Daño", ABILITY_CONFIG.DamageReduction * 100),
 		isBuff = true,
 		icon = "rbxassetid://110288501575260"
 	}
-	MoonsPresence:SetEffect(player, effectData, true)
+	EffectManager:SetEffect(player, effectData, true)
 
 	local healingCoroutine, deathConnection
-
 	healingCoroutine = task.spawn(function()
 		local timeElapsed = 0
-		-- Ahora ABILITY_CONFIG.Duration ya no ser� nil.
 		while timeElapsed < ABILITY_CONFIG.Duration and activeUltimates[player] do
 			local deltaTime = task.wait()
 			timeElapsed = timeElapsed + deltaTime
-
 			if humanoid and humanoid.Health > 0 then
 				local healingReduction = player:GetAttribute("HealingReduction") or 0
 				local actualHealAmount = ABILITY_CONFIG.HealPerSecond * (1 - healingReduction)
@@ -69,28 +63,19 @@ function FinalNoobazo.Execute(player)
 	end)
 
 	local function cleanup()
-		-- Quitar el buff de la GUI
-		local effectData = {
-			name = "Noobazo Final",
-			value = "",
-			isBuff = true,
-			icon = "rbxassetid://110288501575260"
-		}
-		MoonsPresence:SetEffect(player, effectData, false)
 		if not activeUltimates[player] then return end
-
+		
+		EffectManager:SetEffect(player, { name = "Noobazo Final" }, false)
+		
 		if deathConnection then deathConnection:Disconnect() end
 		if healingCoroutine then task.cancel(healingCoroutine) end
 
-		local formerCharacter = player.Character -- Guardamos la referencia por si cambia
-
+		local formerCharacter = player.Character
 		activeUltimates[player] = nil
 
 		if player and player.Parent then
 			player:SetAttribute("UltimateDamageReduction", nil)
 			player:SetAttribute("IsImmuneToCC", nil)
-
-			-- Y esta tambi�n funcionar�.
 			if Events.AbilityUsed and formerCharacter then
 				Events.AbilityUsed:FireAllClients(formerCharacter, FinalNoobazo.Name, "End")
 			end
@@ -98,9 +83,7 @@ function FinalNoobazo.Execute(player)
 	end
 
 	deathConnection = humanoid.Died:Once(cleanup)
-
 	task.delay(ABILITY_CONFIG.Duration, cleanup)
-
 	return true
 end
 

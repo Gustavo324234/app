@@ -1,4 +1,4 @@
--- StarterPlayer/StarterPlayerScripts/ClientModules/UIModules/LobbyController.lua (NUEVO MÓDULO)
+-- StarterPlayer/StarterPlayerScripts/ClientModules/UIModules/LobbyController.lua (VERSIÓN FINAL CON LÓGICA DE BOTONES EXPLÍCITA)
 
 local LobbyController = {}
 
@@ -13,62 +13,49 @@ local RemoteFunctions = ReplicatedStorage:WaitForChild("RemoteFunctions")
 local GetCharacters = RemoteFunctions:WaitForChild("ObtenerPersonajes")
 local BuyCharacter = RemoteEvents:WaitForChild("ComprarPersonaje")
 local ChangeCharacter = RemoteEvents:WaitForChild("CambiarPersonaje")
--- El evento ToggleShopUI ya no es necesario aquí, será manejado por el InputController o botones de la UI principal.
 local RefreshShopEvent = RemoteEvents:WaitForChild("RefreshShop")
+local ToggleLobbyUIEvent = RemoteEvents:WaitForChild("ToggleLobbyUI")
+local ToggleShopUIEvent = RemoteEvents:WaitForChild("ToggleShopUI")
 
 -- --- ESTADO DEL MÓDULO ---
-local uiReferences = {} -- Almacenará las referencias a la UI
-local currentFilter = "Asesino" -- Cambiado para coincidir con los datos del servidor
-local currentView = "Shop" -- Vista por defecto inicializada
+local uiReferences = {}
+local currentFilter = "Asesinos" 
+local currentView = "Shop" -- Vista por defecto, aunque ahora se establecerá explícitamente
 
--- --- FUNCIONES PRIVADAS DEL MÓDULO ---
+-- --- FUNCIONES PRIVADAS ---
 
--- La función principal que redibuja toda la interfaz
 local function refreshUI()
-	-- Comprobaciones de seguridad
-	if not uiReferences.charactersFrame or not uiReferences.charactersFrame.Visible then return end
-	
-	print("LobbyController: Refrescando UI para Vista:", currentView, "| Filtro:", currentFilter)
+	if not uiReferences.charactersFrame then return end
+    -- Solo refrescamos si el panel está visible.
+    if not uiReferences.charactersFrame.Visible then return end
+
+	print("[LobbyController] Refrescando UI. Vista actual:", currentView, "| Filtro actual:", currentFilter)
 	uiReferences.titleLabel.Text = currentView:upper()
-
 	local characterDataFromServer = GetCharacters:InvokeServer()
-	if not characterDataFromServer then return end
+	if not characterDataFromServer then print("[LobbyController] No se recibieron datos de personajes del servidor.") return end
 
-	-- Limpia la lista actual
 	for _, child in ipairs(uiReferences.characterList:GetChildren()) do
 		if child.Name == "CharacterCard" then child:Destroy() end
 	end
 
-	local charactersToShow = (currentFilter == "Asesino") and characterDataFromServer.Asesinos or characterDataFromServer.Sobrevivientes
+	local charactersToShow = characterDataFromServer[currentFilter]
+	if not charactersToShow then print("[LobbyController] No se encontró la lista de personajes para el filtro:", currentFilter); return end
 
 	for _, charData in ipairs(charactersToShow) do
-		-- En el inventario, solo mostrar los que se poseen
-		if currentView == "Inventory" and not charData.Owned then
-			continue
-		end
-
+		if currentView == "Inventory" and not charData.Owned then continue end
 		local newCard = uiReferences.template:Clone()
 		newCard.Name = "CharacterCard"
 		newCard.Visible = true
 		newCard.Parent = uiReferences.characterList
-
-		local button = newCard.BotonComprar
-		local icon = newCard.Icono
-		local nameLabel = newCard.Nombre
-		local overlay = newCard.Overlay
-		local ownedLabel = newCard.OwnedLabel
-
+		local button, icon, nameLabel, overlay, ownedLabel = newCard.BotonComprar, newCard.Icono, newCard.Nombre, newCard.Overlay, newCard.OwnedLabel
 		icon.Image = charData.Icon
 		nameLabel.Text = charData.Name
-
 		if currentView == "Shop" then
 			overlay.Visible = false
 			if charData.Owned then
-				button.Visible = false
-				ownedLabel.Visible = true
+				button.Visible, ownedLabel.Visible = false, true
 			else
-				button.Visible = true
-				ownedLabel.Visible = false
+				button.Visible, ownedLabel.Visible = true, false
 				button.Text = tostring(charData.Price)
 				if charData.Price == 0 then button.Text = "GRATIS" end
 				button.BackgroundColor3 = Color3.fromRGB(50, 120, 200)
@@ -80,87 +67,99 @@ local function refreshUI()
 			button.BackgroundColor3 = Color3.fromRGB(80, 160, 80)
 			overlay.Visible = charData.Selected
 		end
-
 		button.MouseButton1Click:Connect(function()
+			local serverCharacterType = (currentFilter == "Asesinos") and "Asesino" or "Sobreviviente"
 			if currentView == "Inventory" and not charData.Selected then
-				ChangeCharacter:FireServer(currentFilter, charData.Name)
-				refreshUI() -- Refresca para mostrar el cambio de selección
+				ChangeCharacter:FireServer(serverCharacterType, charData.Name)
+				refreshUI()
 			elseif currentView == "Shop" and not charData.Owned then
-				BuyCharacter:FireServer(currentFilter, charData.Name)
+				BuyCharacter:FireServer(serverCharacterType, charData.Name)
 			end
 		end)
 	end
-
-	task.wait() -- Esperar a que la UI se renderice para calcular el tamaño correcto
+	task.wait()
 	uiReferences.characterList.CanvasSize = UDim2.new(0, 0, 0, uiReferences.characterList.UIGridLayout.AbsoluteContentSize.Y)
 end
 
--- --- FUNCIÓN PÚBLICA DE INICIALIZACIÓN ---
+-- --- FUNCIONES PÚBLICAS ---
+
+function LobbyController:SetSidebarVisible(isVisible)
+    if uiReferences.sidebar then
+        print("[LobbyController] Estableciendo visibilidad de la Sidebar a:", tostring(isVisible))
+        uiReferences.sidebar.Visible = isVisible
+    end
+end
 
 function LobbyController:Initialize(lobbyGui)
-	-- Guardamos las referencias a los elementos de la UI
+	uiReferences.lobbyGui = lobbyGui
+    uiReferences.sidebar = lobbyGui:WaitForChild("Sidebar")
 	uiReferences.charactersFrame = lobbyGui:WaitForChild("CharactersFrame")
-	uiReferences.inventoryBtn = lobbyGui:WaitForChild("Sidebar"):WaitForChild("InventarioBtn")
-    uiReferences.shopBtn = lobbyGui:WaitForChild("Sidebar"):WaitForChild("TiendaBtn") -- Asumiendo que tienes un botón de tienda
-	uiReferences.closeBtn = uiReferences.charactersFrame:FindFirstChild("Cerrar")
+	uiReferences.inventoryBtn = uiReferences.sidebar:WaitForChild("InventarioBtn")
+	uiReferences.closeBtn = uiReferences.charactersFrame:WaitForChild("Cerrar")
 	uiReferences.titleLabel = uiReferences.charactersFrame:WaitForChild("Titulo")
 	uiReferences.characterList = uiReferences.charactersFrame:WaitForChild("ContenedorLista")
 	uiReferences.template = uiReferences.charactersFrame:WaitForChild("Plantillas"):WaitForChild("PlantillaPersonaje")
 	uiReferences.filterKillersBtn = uiReferences.charactersFrame:WaitForChild("FiltrosFrame"):WaitForChild("BotonFiltroAsesinos")
 	uiReferences.filterSurvivorsBtn = uiReferences.charactersFrame:WaitForChild("FiltrosFrame"):WaitForChild("BotonFiltroSobrevivientes")
-
-	-- Ocultamos el frame principal por defecto
 	uiReferences.charactersFrame.Visible = false
 
 	-- --- CONEXIONES DE EVENTOS ---
+	
+    ToggleLobbyUIEvent.OnClientEvent:Connect(function(isVisible)
+        uiReferences.lobbyGui.Enabled = isVisible
+        self:SetSidebarVisible(isVisible) -- Usamos la nueva función pública
+        if not isVisible then uiReferences.charactersFrame.Visible = false end
+    end)
+    
+    -- [[ LÓGICA EXPLÍCITA PARA ABRIR TIENDA ]]
+    ToggleShopUIEvent.OnClientEvent:Connect(function(action)
+        print("[LobbyController] Recibido ToggleShopUIEvent con acción:", action or "nil")
+        if action == "force_close" then
+            if currentView == "Shop" then
+                uiReferences.charactersFrame.Visible = false
+            end
+        else
+            -- El NPC siempre abre la tienda.
+            currentView = "Shop"
+            currentFilter = "Asesinos"
+            uiReferences.charactersFrame.Visible = true
+            refreshUI()
+        end
+    end)
+    
+    -- [[ LÓGICA EXPLÍCITA PARA ABRIR INVENTARIO ]]
+	uiReferences.inventoryBtn.MouseButton1Click:Connect(function()
+        print("[LobbyController] Botón de inventario clickeado.")
+        -- Este botón siempre abre el inventario.
+        currentView = "Inventory"
+        currentFilter = "Asesinos"
+        uiReferences.charactersFrame.Visible = true
+        refreshUI()
+	end)
 
-	-- Filtros
 	uiReferences.filterKillersBtn.MouseButton1Click:Connect(function()
-		currentFilter = "Asesino"
-		if uiReferences.charactersFrame.Visible then refreshUI() end
+		currentFilter = "Asesinos"
+		refreshUI()
 	end)
 	uiReferences.filterSurvivorsBtn.MouseButton1Click:Connect(function()
-		currentFilter = "Sobreviviente"
-		if uiReferences.charactersFrame.Visible then refreshUI() end
+		currentFilter = "Sobrevivientes"
+		refreshUI()
 	end)
-
-	-- Abrir menús
-    if uiReferences.shopBtn then
-        uiReferences.shopBtn.MouseButton1Click:Connect(function()
-            if uiReferences.charactersFrame.Visible and currentView == "Shop" then
-                uiReferences.charactersFrame.Visible = false
-            else
-                currentView = "Shop"
-                uiReferences.charactersFrame.Visible = true
-                refreshUI()
-            end
-        end)
-    end
     
-	uiReferences.inventoryBtn.MouseButton1Click:Connect(function()
-		if uiReferences.charactersFrame.Visible and currentView == "Inventory" then
-			uiReferences.charactersFrame.Visible = false
-		else
-			currentView = "Inventory"
-			uiReferences.charactersFrame.Visible = true
-			refreshUI()
-		end
-	end)
-
-	-- Botón de cerrar
+    -- [[ LÓGICA EXPLÍCITA PARA CERRAR ]]
 	if uiReferences.closeBtn then
-		uiReferences.closeBtn.MouseButton1Click:Connect(function() uiReferences.charactersFrame.Visible = false end)
+		uiReferences.closeBtn.MouseButton1Click:Connect(function() 
+            print("[LobbyController] Botón de cerrar clickeado.")
+            uiReferences.charactersFrame.Visible = false 
+        end)
 	end
 
-	-- Refresco forzado desde el servidor (ej. después de una compra exitosa)
 	RefreshShopEvent.OnClientEvent:Connect(function()
-		if uiReferences.charactersFrame.Visible then
-			print("LobbyController: Refrescando UI después de una compra...")
-			refreshUI()
-		end
+        print("[LobbyController] Recibida orden de refresco del servidor.")
+		refreshUI()
 	end)
 
-	print("[LobbyController] Inicializado y listo.")
+	print("[LobbyController] Inicializado.")
 end
 
 return LobbyController

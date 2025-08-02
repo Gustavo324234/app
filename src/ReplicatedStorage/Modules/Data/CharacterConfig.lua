@@ -1,4 +1,4 @@
--- ServerScriptService/Modules/Data/CharacterConfig.lua (MODIFICADO PARA INCLUIR STATS DE HABILIDADES)
+-- ReplicatedStorage/Modules/Data/CharacterConfig.lua (MODIFICADO PARA INCLUIR STATS DE HABILIDADES)
 
 local CharacterConfig = {
 	-- Clave principal para el rol de asesino

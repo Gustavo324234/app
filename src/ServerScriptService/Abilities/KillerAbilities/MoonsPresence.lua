@@ -1,69 +1,83 @@
--- Moon's Presence (Presencia Lunar) - Pasiva de Spawnmoon
--- Aplica efectos de ansiedad y pánico a sobrevivientes cercanos
-local MoonsPresence = {}
+-- ServerScriptService/Abilities/KillerAbilities/MoonsPresence.lua (VERSIÓN MODULAR FINAL)
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local EffectManager = require(game:GetService("ServerScriptService").Modules.EffectManager)
+
+local MoonsPresence = {}
+MoonsPresence.Type = "Passive"
+MoonsPresence.Name = "MoonsPresence"
+MoonsPresence.DisplayName = "Presencia Lunar"
+MoonsPresence.Icon = "rbxassetid://132619102920325" -- Asumiendo un icono
+
+-- --- CONFIGURACIÓN DE LA HABILIDAD ---
 local PANIC_RADIUS = 20
 local PANIC_TIME = 3
-local STAMINA_BLOCK_TIME = 2
 
--- Tabla para llevar el tiempo que cada sobreviviente lleva en el radio
-local panicTimers = {}
+-- --- LÓGICA INTERNA ---
+local activeKillers = {}
 
+function MoonsPresence.Activate(player, modifiers)
+	if activeKillers[player] then return end
+	print("[MoonsPresence] Activando para el jugador:", player.Name)
 
--- Sistema global de efectos activos por jugador
-local globalActiveEffects = {}
+	local loopCoroutine = task.spawn(function()
+		local panicTimers = {}
+		
+		while player and player.Parent and activeKillers[player] do
+			local spawnmoonChar = player.Character
+			local hrp = spawnmoonChar and spawnmoonChar:FindFirstChild("HumanoidRootPart")
 
--- Función para que cualquier módulo de habilidad agregue/quite efectos
-function MoonsPresence:SetEffect(player, effectData, active)
-    globalActiveEffects[player] = globalActiveEffects[player] or {}
-    if active then
-        -- Agrega o actualiza el efecto por nombre único
-        local found = false
-        for i, eff in ipairs(globalActiveEffects[player]) do
-            if eff.name == effectData.name then
-                globalActiveEffects[player][i] = effectData
-                found = true
-                break
-            end
-        end
-        if not found then table.insert(globalActiveEffects[player], effectData) end
-    else
-        -- Quita el efecto por nombre
-        for i = #globalActiveEffects[player], 1, -1 do
-            if globalActiveEffects[player][i].name == effectData.name then
-                table.remove(globalActiveEffects[player], i)
-            end
-        end
-    end
+			if hrp then
+				for _, survivor in ipairs(Players:GetPlayers()) do
+					if survivor:GetAttribute("Rol") == "Survivor" and survivor.Character then
+						local survivorHrp = survivor.Character:FindFirstChild("HumanoidRootPart")
+						if survivorHrp then
+							local dist = (survivorHrp.Position - hrp.Position).Magnitude
+							
+							local effectData = {
+								name = "Pánico",
+								value = "-20%",
+								isBuff = false,
+								icon = "rbxassetid://654321"
+							}
+							
+							local isInRadius = (dist <= PANIC_RADIUS)
+							
+							EffectManager:SetEffect(survivor, effectData, isInRadius)
+							
+							if isInRadius then
+								panicTimers[survivor] = (panicTimers[survivor] or 0) + task.wait()
+								if panicTimers[survivor] >= PANIC_TIME then
+									panicTimers[survivor] = PANIC_TIME
+								end
+							else
+								panicTimers[survivor] = 0
+							end
+						end
+					end
+				end
+			end
+			task.wait(0.2)
+		end
+	end)
+	
+	activeKillers[player] = loopCoroutine
 end
 
-function MoonsPresence:OnSpawnmoonStep(spawnmoonChar)
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player:GetAttribute("Rol") == "Survivor" and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local dist = (player.Character.HumanoidRootPart.Position - spawnmoonChar.HumanoidRootPart.Position).Magnitude
-            local effectData = {
-                name = "Pánico",
-                value = "-20%",
-                isBuff = false,
-                icon = "rbxassetid://654321"
-            }
-            if dist <= PANIC_RADIUS then
-                panicTimers[player] = (panicTimers[player] or 0) + RunService.Heartbeat:Wait()
-                if panicTimers[player] >= PANIC_TIME then
-                    panicTimers[player] = PANIC_TIME
-                end
-                -- Agregar el efecto de pánico
-                self:SetEffect(player, effectData, true)
-            else
-                panicTimers[player] = 0
-                -- Quitar el efecto de pánico
-                self:SetEffect(player, effectData, false)
-            end
-            -- Enviar la lista global de efectos activos al cliente
-            game.ReplicatedStorage.RemoteEvents.ShowDebuffUI:FireClient(player, globalActiveEffects[player] or {})
-        end
-    end
+function MoonsPresence.Deactivate(player)
+	if not activeKillers[player] then return end
+	print("[MoonsPresence] Desactivando para el jugador:", player.Name)
+	
+	task.cancel(activeKillers[player])
+	activeKillers[player] = nil
+
+	local effectData = { name = "Pánico" }
+	for _, survivor in ipairs(Players:GetPlayers()) do
+		if survivor:GetAttribute("Rol") == "Survivor" then
+			EffectManager:SetEffect(survivor, effectData, false)
+		end
+	end
 end
 
 return MoonsPresence
