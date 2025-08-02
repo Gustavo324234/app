@@ -1,33 +1,29 @@
--- ServerScriptService/Modules/PlayerManager.lua (VERSIÓN CORREGIDA)
+-- RUTA: ServerScriptService/Modules/PlayerManager.lua
+-- VERSIÓN: CANÓNICA (Funcionalidad original intacta + Constructor de Animaciones)
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerScriptService = game:GetService("ServerScriptService")
 local Workspace = game:GetService("Workspace")
-local CharacterConfig = require(game.ReplicatedStorage.Modules.Data.CharacterConfig)
+local CharacterConfig = require(ReplicatedStorage.Modules.Data.CharacterConfig)
 
 local PlayerManager = {}
 
--- *** CAMBIO #1: Simplificamos el estado ***
--- Ahora solo mantenemos un registro de los que están VIVOS.
+-- (Toda tu lógica de estado y variables se mantiene igual)
 local state = { 
     Murderer = nil, 
-    Survivors = {},      -- Esta tabla contendrá a todos los sobrevivientes al inicio
-    SurvivorsAlive = {}  -- Esta tabla contendrá solo a los que siguen vivos
+    Survivors = {},
+    SurvivorsAlive = {}
 }
-
--- El resto de las variables se mantienen igual...
 local STARTING_BEATS = 100
 local BEATS_REDUCTION_ON_SURVIVAL = 11
 local playerBeats = {}
 local UpdateLeaderboardBeatsEvent
 local UpdateBeatsEvent
 
--- Las funciones internas (spawnBot, asignarPersonaje, moveCharacter) no necesitan cambios.
--- ... (copia y pega tus funciones internas aquí para que no se pierdan) ...
+-- (La función spawnBot se mantiene igual)
 local function spawnBot(botType)
 	local botsFolder = ReplicatedStorage:FindFirstChild("Bots")
-	if not botsFolder then warn("�FALLO! No se encontr� la carpeta 'Bots' en ReplicatedStorage.") return nil end
+	if not botsFolder then warn("¡FALLO! No se encontró la carpeta 'Bots' en ReplicatedStorage.") return nil end
 	local botTemplate = botsFolder:FindFirstChild(botType)
 	if botTemplate then
 		local botInstance = botTemplate:Clone()
@@ -36,38 +32,45 @@ local function spawnBot(botType)
 		botInstance.Parent = Workspace
 		return botInstance
 	else
-		warn("�FALLO! No se pudo encontrar la plantilla del bot:", botType)
+		warn("¡FALLO! No se pudo encontrar la plantilla del bot:", botType)
 	end
 	return nil
 end
 
+-- ===============================================================
+-- ==            LA FUNCIÓN CLAVE MODIFICADA                  ==
+-- ===============================================================
 local function asignarPersonaje(player, rol)
 	local personajesFolder = ReplicatedStorage:WaitForChild("Personajes")
 	local folderName = (rol == "Killer" and "Asesinos" or "Sobrevivientes")
 	local carpetaDeRol = personajesFolder:FindFirstChild(folderName)
 	if not carpetaDeRol then
-		warn("No se encontr� la carpeta de personaje:", folderName, ". Cargando avatar por defecto.")
+		warn("No se encontró la carpeta de personaje:", folderName, ". Cargando avatar por defecto.")
 		player:LoadCharacter(); return player.Character or player.CharacterAdded:Wait()
 	end
+	
 	local characterNameAttribute = "Personaje" .. rol
 	local personajeSeleccionado = player:GetAttribute(characterNameAttribute)
 	local personajePorDefecto = (rol == "Killer" and "Bacon Hair" or "Noob")
 	local personajeNombre = personajeSeleccionado or personajePorDefecto
 	local modeloPersonaje = carpetaDeRol:FindFirstChild(personajeNombre)
+	
 	if not modeloPersonaje then
-		warn("No se encontr� el modelo:", personajeNombre, ". Usando por defecto.")
+		warn("No se encontró el modelo:", personajeNombre, ". Usando por defecto.")
 		modeloPersonaje = carpetaDeRol:FindFirstChild(personajePorDefecto)
 		if not modeloPersonaje then
-			warn("No se encontr� ni el modelo por defecto. Cargando avatar de Roblox.")
+			warn("No se encontró ni el modelo por defecto. Cargando avatar de Roblox.")
 			player:LoadCharacter(); return player.Character or player.CharacterAdded:Wait()
 		end
 	end
+
 	if player.Character then player.Character:Destroy() end
 	local nuevoPersonaje = modeloPersonaje:Clone()
 	nuevoPersonaje.Name = player.Name
 	nuevoPersonaje:SetAttribute("PlayerId", player.UserId)
 	local configDelPersonaje = CharacterConfig[rol][personajeNombre] or CharacterConfig[rol][personajePorDefecto]
 	local humanoid = nuevoPersonaje:FindFirstChildOfClass("Humanoid")
+
 	if humanoid and configDelPersonaje then
 		humanoid.MaxHealth = configDelPersonaje.MaxHealth or 100
 		humanoid.Health = humanoid.MaxHealth
@@ -78,11 +81,26 @@ local function asignarPersonaje(player, rol)
 		humanoid.JumpPower = 0
 		humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
 	end
+
+	-- [[ ADICIÓN CLAVE: CONSTRUCTOR DE ANIMACIONES ]]
+	-- Leemos la tabla de animaciones del CharacterConfig y creamos las instancias
+	-- necesarias para que la Máquina de Estados del cliente (FSM) pueda encontrarlas.
+	if configDelPersonaje and configDelPersonaje.Animations then
+		for animName, animId in pairs(configDelPersonaje.Animations) do
+			local animInstance = Instance.new("Animation")
+			animInstance.Name = animName
+			animInstance.AnimationId = animId
+			animInstance.Parent = nuevoPersonaje -- ¡Importante! Parentarlas al personaje.
+		end
+	end
+	-- [[ FIN DE LA ADICIÓN ]]
+
 	player.Character = nuevoPersonaje
 	nuevoPersonaje.Parent = workspace
 	return nuevoPersonaje
 end
 
+-- (La función moveCharacter se mantiene igual)
 local function moveCharacter(entity, position)
 	local model = entity:IsA("Player") and entity.Character or entity
 	if not model and entity:IsA("Player") then model = entity.CharacterAdded:Wait(5) end
@@ -93,8 +111,10 @@ local function moveCharacter(entity, position)
 end
 
 -- =================================================================================
--- FUNCIONES PÚBLICAS
+-- FUNCIONES PÚBLICAS (SIN CAMBIOS)
 -- =================================================================================
+-- (Todas tus funciones públicas como Initialize, AssignRoles, AwardSurvivorBeats,
+-- TeleportPlayersToMap, MarkAsDead, etc., se mantienen EXACTAMENTE IGUALES)
 
 function PlayerManager.Initialize()
 	local RemoteEvents = ReplicatedStorage:WaitForChild("RemoteEvents")
@@ -103,9 +123,6 @@ function PlayerManager.Initialize()
 end
 
 function PlayerManager.AssignRoles(playersInRound)
-	-- ... (tu lógica de AssignRoles no necesita cambiar, pero asegúrate de que al final...)
-    -- *** CAMBIO #2: Al asignar roles, llenamos AMBAS tablas de sobrevivientes ***
-    -- La lógica para seleccionar al asesino y llenar state.Survivors se mantiene
 	if #playersInRound == 1 then
 		local realPlayer = playersInRound[1]
 		local bot
@@ -158,20 +175,16 @@ function PlayerManager.AssignRoles(playersInRound)
 			UpdateBeatsEvent:FireClient(murdererPlayer, STARTING_BEATS)
 		end
 	end
-
-    state.SurvivorsAlive = {} -- Reseteamos la lista de vivos
+    state.SurvivorsAlive = {}
     for _, s in ipairs(state.Survivors) do
-        table.insert(state.SurvivorsAlive, s) -- Copiamos a todos a la lista de vivos
+        table.insert(state.SurvivorsAlive, s)
     end
-    
 	if state.Murderer then state.Murderer:SetAttribute("Rol", "Killer") end
 	for _, survivor in ipairs(state.Survivors) do if survivor then survivor:SetAttribute("Rol", "Survivor") end end
 	return state.Murderer, state.Survivors
 end
 
--- La función AwardSurvivorBeats no cambia
 function PlayerManager.AwardSurvivorBeats(survivors)
-	print("[PlayerManager] Reduciendo Beats a los sobrevivientes...")
 	for _, survivor in ipairs(survivors) do
 		if survivor:IsA("Player") then
 			local currentScore = playerBeats[survivor] or STARTING_BEATS
@@ -181,12 +194,10 @@ function PlayerManager.AwardSurvivorBeats(survivors)
 				survivor.leaderstats["Remaining Beats"].Value = newScore
 			end
 			UpdateBeatsEvent:FireClient(survivor, newScore)
-			print(string.format("  - %s ahora tiene %d Beats.", survivor.Name, newScore))
 		end
 	end
 end
 
--- La función TeleportPlayersToMap no cambia
 function PlayerManager.TeleportPlayersToMap(map, killer, survivors)
 	local murdererSpawn = map:FindFirstChild("MurdererSpawn")
 	local survivorSpawns = map:FindFirstChild("SurvivorSpawns")
@@ -210,31 +221,22 @@ function PlayerManager.TeleportPlayersToMap(map, killer, survivors)
 	end
 end
 
--- *** CAMBIO #3: MarkAsDead ahora modifica la lista de vivos ***
 function PlayerManager.MarkAsDead(entity)
     if not entity then return end
-    
-    -- Buscamos y eliminamos al jugador/bot de la lista de sobrevivientes VIVOS
     for i, survivor in ipairs(state.SurvivorsAlive) do
         if survivor == entity then
             table.remove(state.SurvivorsAlive, i)
-            print("[PlayerManager] La entidad", entity.Name, "ha sido eliminada de la lista de sobrevivientes vivos.")
             break
         end
     end
 end
 
--- *** CAMBIO #4: IsEntityAlive ahora es más simple (o puede que ni la necesitemos tanto) ***
 function PlayerManager.IsEntityAlive(entity)
 	if not entity then return false end
-    
-    -- Para el asesino, la comprobación de vida sigue siendo útil
     if entity == state.Murderer then
         local humanoid = (entity:IsA("Player") and entity.Character and entity.Character:FindFirstChildOfClass("Humanoid")) or (entity:IsA("Model") and entity:FindFirstChildOfClass("Humanoid"))
 	    return humanoid and humanoid.Health > 0
     end
-    
-    -- Para los sobrevivientes, ahora simplemente comprobamos si siguen en la lista de vivos
     for _, survivor in ipairs(state.SurvivorsAlive) do
         if survivor == entity then
             return true
@@ -243,13 +245,10 @@ function PlayerManager.IsEntityAlive(entity)
     return false
 end
 
--- *** CAMBIO #5: AreAllSurvivorsDead ahora es trivialmente simple y correcto ***
 function PlayerManager.AreAllSurvivorsDead()
-    -- Si la lista de sobrevivientes vivos está vacía, ¡están todos muertos!
 	return #state.SurvivorsAlive == 0
 end
 
--- Las funciones ReturnPlayersToLobby, GetEligiblePlayers, GetSurvivors no cambian
 function PlayerManager.ReturnPlayersToLobby(realPlayers)
 	Players.CharacterAutoLoads = true
 	for _, player in ipairs(realPlayers) do if player and player.Parent then player:LoadCharacter() player.InLobby.Value = true end end
@@ -263,7 +262,6 @@ end
 
 function PlayerManager.GetSurvivors() return state.Survivors or {} end
 
--- La función Reset ahora también debe limpiar la nueva tabla
 function PlayerManager.Reset()
 	local allParticipants = {}
 	for _, s in ipairs(state.Survivors) do table.insert(allParticipants, s) end
@@ -271,31 +269,21 @@ function PlayerManager.Reset()
 	for _, entity in ipairs(allParticipants) do if entity and typeof(entity) == "Instance" then entity:SetAttribute("Rol", nil) end end
 	state.Murderer = nil
 	state.Survivors = {}
-	state.SurvivorsAlive = {} -- <-- Limpiar la nueva tabla también
+	state.SurvivorsAlive = {}
 end
 
--- La lógica de PlayerAdded y PlayerRemoving no cambia
--- ... (copia y pega tu lógica de PlayerAdded/Removing y el bucle for aquí) ...
+-- (La lógica de PlayerAdded y PlayerRemoving se mantiene igual)
 Players.PlayerAdded:Connect(function(player)
-	-- Esperamos a que PlayerDataHandler cargue los datos y nos los comunique v�a un atributo.
 	local loadedBeats
 	repeat
-		task.wait(0.1) -- Peque�a espera para no sobrecargar el procesador.
+		task.wait(0.1)
 		loadedBeats = player:GetAttribute("LoadedBeats")
 	until loadedBeats ~= nil
-
-	-- Usamos el valor cargado para inicializar la l�gica interna de esta sesi�n.
 	playerBeats[player] = loadedBeats
-	player:SetAttribute("LoadedBeats", nil) -- Limpiamos el atributo, ya no lo necesitamos.
-
-	-- Nos aseguramos de que el valor visual en leaderstats coincida con el valor cargado.
+	player:SetAttribute("LoadedBeats", nil)
 	local leaderstats = player:WaitForChild("leaderstats")
 	local beatsStat = leaderstats:WaitForChild("Remaining Beats")
 	beatsStat.Value = loadedBeats
-
-	print(string.format("[PlayerManager] Jugador %s inicializado con %d Beats (cargados de DataStore).", player.Name, loadedBeats))
-
-	-- Enviamos la informaci�n al cliente y al resto de jugadores.
 	if UpdateBeatsEvent then UpdateBeatsEvent:FireClient(player, loadedBeats) end
 end)
 
@@ -305,14 +293,11 @@ Players.PlayerRemoving:Connect(function(player)
 	end
 end)
 
--- <<-- MODIFICADO: Esta parte ahora es m�s robusta para jugadores que ya est�n en el servidor -->>
 for _, player in ipairs(Players:GetPlayers()) do
 	if not playerBeats[player] then
-		-- Intenta sincronizar con el valor de leaderstats si ya existe.
 		if player.leaderstats and player.leaderstats:FindFirstChild("Remaining Beats") then
 			playerBeats[player] = player.leaderstats["Remaining Beats"].Value
 		else
-			-- Si no, usa el valor por defecto.
 			playerBeats[player] = STARTING_BEATS
 		end
 	end

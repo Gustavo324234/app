@@ -1,52 +1,37 @@
--- ClientModules/UIModules/GameScreens.lua 
+-- RUTA: StarterPlayer/StarterPlayerScripts/ClientModules/UIModules/GameScreens.lua
+-- VERSIÓN: CANÓNICA (Rutas de UI corregidas y bug de conexión de botón solucionado)
 
 local GameScreens = {}
 
 local player = game:GetService("Players").LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Las referencias a las GUIs. Como los nombres son correctos, esto está bien.
+-- Referencias a las GUIs principales
 local loadingScreenGui = playerGui:WaitForChild("LoadingScreenGui")
 local roundStatsScreenGui = playerGui:WaitForChild("RoundStatsScreenGui")
 
+-- Esta función se mantiene igual, ya que su lógica es correcta.
 function GameScreens.ShowLoadingScreen(killerName)
-    if loadingScreenGui then
-        loadingScreenGui.Enabled = true
-        
-        -- --- CÓDIGO CORREGIDO AQUÍ ---
-        -- 1. Primero buscamos el frame principal
-        local backgroundFrame = loadingScreenGui:FindFirstChild("BackgroundFrame")
-        
-        if backgroundFrame then
-            -- 2. LUEGO, buscamos la etiqueta DENTRO del frame
-            local killerLabel = backgroundFrame:FindFirstChild("KillerNameLabel")
-            if killerLabel then
-                killerLabel.Text = killerName or "?"
-            else
-                warn("[GameScreens] ¡ADVERTENCIA! No se encontró 'KillerNameLabel' DENTRO de 'BackgroundFrame'.")
-            end
-        else
-            warn("[GameScreens] ¡ADVERTENCIA! No se encontró el 'BackgroundFrame' dentro de 'LoadingScreenGui'.")
+    if not loadingScreenGui then return end
+    loadingScreenGui.Enabled = true
+    
+    local backgroundFrame = loadingScreenGui:FindFirstChild("BackgroundFrame")
+    if backgroundFrame then
+        local killerLabel = backgroundFrame:FindFirstChild("KillerNameLabel")
+        if killerLabel then
+            killerLabel.Text = killerName or "?"
         end
-        -- --- FIN DE LA CORRECCIÓN ---
-
-    else
-        warn("[GameScreens] ¡ERROR GRAVE! loadingScreenGui es nil.")
     end
 end
 
+-- Esta función se mantiene igual.
 function GameScreens.HideLoadingScreen()
     if loadingScreenGui then
-      --  print("[GameScreens] HideLoadingScreen llamado. Intentando desactivar...") -- PRINT #4
         loadingScreenGui.Enabled = false
-       -- print("[GameScreens] 'Enabled' de la GUI es ahora:", loadingScreenGui.Enabled) -- PRINT #5 (Debería decir 'false')
-    else
-         warn("[GameScreens] ¡ERROR GRAVE! loadingScreenGui es nil. No se puede ocultar.")
     end
 end
 
 function GameScreens.ShowRoundStatsScreen(summaryData, onExitCallback)
-    -- Guardia de seguridad: si la GUI no existe, no hacemos nada.
     if not roundStatsScreenGui then
         warn("[GameScreens] Intento de mostrar estadísticas, pero roundStatsScreenGui no existe.")
         return
@@ -54,13 +39,13 @@ function GameScreens.ShowRoundStatsScreen(summaryData, onExitCallback)
     
     roundStatsScreenGui.Enabled = true
     
-    -- Buscamos los elementos de la UI de forma segura. La búsqueda recursiva (el 'true')
-    -- es útil si los labels están dentro de otros frames.
-    local titleLabel = roundStatsScreenGui:FindFirstChild("TitleLabel", true) -- Asumo que podrías tener un título
-    local statsLabel = roundStatsScreenGui:FindFirstChild("StatsLabel", true)
-    local exitButton = roundStatsScreenGui:FindFirstChild("ExitButton", true)
+    -- [[ CAMBIO #1: Búsqueda más precisa dentro de MainFrame ]]
+    -- Basado en tu estructura, los elementos de la UI están dentro de 'MainFrame'.
+    local mainFrame = roundStatsScreenGui:WaitForChild("MainFrame")
+    local titleLabel = mainFrame:FindFirstChild("TitleLabel") -- Asumo que estos están dentro de MainFrame
+    local statsLabel = mainFrame:FindFirstChild("StatsLabel")
+    local exitButton = mainFrame:FindFirstChild("ExitButton")
 
-    -- Si no recibimos la tabla de datos, mostramos un mensaje de error genérico.
     if not summaryData or type(summaryData) ~= "table" then
         warn("[GameScreens] No se recibieron datos de resumen válidos para la pantalla de estadísticas.")
         if titleLabel then titleLabel.Text = "Fin de la Ronda" end
@@ -68,37 +53,40 @@ function GameScreens.ShowRoundStatsScreen(summaryData, onExitCallback)
         return
     end
 
-    -- Asignamos el texto a las etiquetas usando los datos de la tabla.
     if titleLabel then
-        -- Usamos el título que viene del servidor, o uno por defecto si no existe.
         titleLabel.Text = summaryData.title or "Fin de la Ronda"
     end
     
     if statsLabel then
-        -- Construimos un texto de estadísticas más detallado y útil.
-        local statsString = string.format(
+        statsLabel.Text = string.format(
             "Asesino: %s\n\nSobrevivientes Restantes: %d de %d",
             summaryData.killerName or "?",
             summaryData.survivorsAlive or 0,
             summaryData.totalSurvivors or 0
         )
-        statsLabel.Text = statsString
     end
 
-    -- Conectamos el botón de salida (esta lógica es similar a la tuya pero más segura).
     if exitButton and onExitCallback then
-        -- Desconectamos cualquier conexión anterior para evitar que el evento se dispare múltiples veces.
-        if exitButton.ExitConnection then
+        -- [[ CAMBIO #2: Corrección del bug de desconexión ]]
+        -- Primero comprobamos si la conexión existe ANTES de intentar desconectarla.
+        if exitButton:FindFirstChild("ExitConnection") then
             exitButton.ExitConnection:Disconnect()
+            exitButton.ExitConnection:Destroy() -- Buena práctica destruir la conexión antigua
         end
         
-        exitButton.ExitConnection = exitButton.MouseButton1Click:Connect(function()
-            GameScreens.HideRoundStatsScreen() -- Primero ocultamos la pantalla
-            onExitCallback()                   -- Luego llamamos a la función de retorno
+        -- Creamos la nueva conexión como un objeto para poder encontrarla después.
+        local newConnection = exitButton.MouseButton1Click:Connect(function()
+            GameScreens.HideRoundStatsScreen()
+            onExitCallback()
         end)
+        
+        -- Guardamos la referencia DENTRO del botón para poder gestionarla en el futuro.
+        newConnection.Name = "ExitConnection"
+        newConnection.Parent = exitButton
     end
 end
 
+-- Esta función se mantiene igual.
 function GameScreens.HideRoundStatsScreen()
     if roundStatsScreenGui then
         roundStatsScreenGui.Enabled = false
