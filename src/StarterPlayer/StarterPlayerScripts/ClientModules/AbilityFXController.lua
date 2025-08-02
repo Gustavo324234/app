@@ -1,175 +1,155 @@
 -- RUTA: StarterPlayer/StarterPlayerScripts/ClientModules/AbilityFXController.lua
--- VERSIÓN: FINAL Y LIMPIA (Delega a AnimationController)
+-- VERSIÓN: CANÓNICA (Completa, comentada y alineada con la FSM de Animación)
+
+--[[
+	Este módulo es el "Supervisor de Efectos Especiales" del cliente.
+	Su única responsabilidad es recibir órdenes del servidor (a través del MainController)
+	y traducir un "plano de efectos" (definido en CharacterConfig) en efectos
+	visuales y de sonido reales en el juego.
+
+	Se comunica con la Máquina de Estados de Animación (Animate.client.lua)
+	para las animaciones, pero maneja sonidos, partículas y cambios de modelo
+	directamente.
+--]]
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
-local ClientModules = script.Parent
 
--- --- MÓDULOS Y CARPETAS REQUERIDAS ---
+-- MÓDULOS Y CARPETAS REQUERIDAS
 local CharacterConfig = require(ReplicatedStorage.Modules.Data.CharacterConfig)
--- Cargamos nuestro "Despachador" de animaciones.
-local AnimationController = require(ClientModules.AnimationController)
 local VFX_FOLDER = ReplicatedStorage:WaitForChild("VFX")
 
 local AbilityFXController = {}
-local activePlayerEffects = {}
-local activeTransforms = {}
+local activePlayerEffects = {} -- Almacena efectos con loop (sonidos, partículas) para poder detenerlos.
+local activeTransforms = {} -- Rastrea si un jugador tiene un modelo intercambiado.
 
--- --- FUNCIONES DE TRANSFORMACIÓN (SIN CAMBIOS) ---
+-- =================================================================
+--          FUNCIONES AUXILIARES PARA EFECTOS COMPLEJOS
+-- =================================================================
+
+-- Intercambia el modelo del personaje por uno de los efectos visuales.
 local function _swapCharacterModel(player, character, modelName, folderName)
 	local modelFolder = VFX_FOLDER:FindFirstChild(folderName)
 	local modelRef = modelFolder and modelFolder:FindFirstChild(modelName)
-	if not modelRef then return character end
+	if not modelRef then
+		warn("[AbilityFX] No se encontró el modelo para intercambiar:", modelName)
+		return character
+	end
 
-	activeTransforms[player] = { oldCharacterName = character:GetAttribute("PersonajeSurvivor") }
+	-- Guardamos el nombre del personaje para poder revertirlo si es necesario.
+	activeTransforms[player] = { oldCharacterName = character.Name }
 
 	local newModel = modelRef:Clone()
 	newModel.Name = player.Name
+	
+	-- Transfiere componentes esenciales y cosméticos al nuevo modelo.
 	for _, child in ipairs(character:GetChildren()) do
-		if child:IsA("Accessory") or child:IsA("Shirt") or child:IsA("Pants") then
+		if child:IsA("Accessory") or child:IsA("Shirt") or child:IsA("Pants") or child:IsA("Humanoid") or child:IsA("Animator") or child:isA("Script") and child.Name == "Animate" then
 			child.Parent = newModel
 		end
 	end
+
 	newModel:SetPrimaryPartCFrame(character:GetPrimaryPartCFrame())
 	character.Archivable = true
 	player.Character = newModel
 	newModel.Parent = Workspace
 	character:Destroy()
+	
+	print("[AbilityFX] Modelo de", player.Name, "intercambiado a", modelName)
 	return newModel
 end
 
+-- Revierte al personaje a su avatar original cargándolo de nuevo.
 local function _revertCharacterModel(player)
 	if not activeTransforms[player] then return end
-	player:LoadCharacter()
+	
+	print("[AbilityFX] Revirtiendo modelo para", player.Name)
+	player:LoadCharacter() -- El método más seguro y limpio para restaurar todo.
 	activeTransforms[player] = nil
 end
 
--- --- MOTOR DE EJECUCIÓN DE EFECTOS ---
--- Reemplaza tu función ProcessEffectBlueprint con esta:
+-- =================================================================
+--          MOTOR PRINCIPAL DE PROCESAMIENTO DE EFECTOS
+-- =================================================================
 
 function AbilityFXController:ProcessEffectBlueprint(character, abilityName, effectType, role, charName)
-	-- El 'role' y 'charName' ahora vienen como argumentos desde el MainController.
-
-	print("[AbilityFXController] Procesando efecto para:", role, charName, abilityName, effectType)
-	
-	-- Pequeño delay para asegurar que el script Animate se haya inicializado
-	if effectType == "Stun" then
-		task.wait(0.1)
-	end
-
-	-- --- COMPROBACIÓN DE DATOS RECIBIDOS ---
-	if not (role and charName) then
-		warn("[AbilityFXController] ¡FALLO! No se recibieron los datos de rol y personaje desde el servidor.")
+	if not (role and charName and character and character.Parent) then
+		warn("[AbilityFX] Datos insuficientes para procesar el efecto blueprint.")
 		return
 	end
 
-	-- Comprobación de que la ruta en CharacterConfig existe.
-	if not (CharacterConfig[role] and CharacterConfig[role][charName] and CharacterConfig[role][charName].AbilityStats and CharacterConfig[role][charName].AbilityStats[abilityName]) then
-		warn("[AbilityFXController] La ruta en CharacterConfig no es válida para:", role, ">", charName, ">", abilityName)
-		return
+	if not (CharacterConfig[role] and CharacterConfig[role][charName] and CharacterConfig[role][charName].AbilityStats and CharacterConfig[role][charName].AbilityStats[abilityName] and CharacterConfig[role][charName].AbilityStats[abilityName][effectType]) then
+		return -- No es un error, solo significa que esta acción no tiene efectos visuales.
 	end
 
 	local effectBlueprint = CharacterConfig[role][charName].AbilityStats[abilityName][effectType]
+	local player = Players:GetPlayerFromCharacter(character)
 
-	if not effectBlueprint then
-		warn("[AbilityFXController] No se encontró el plano de efecto específico para:", effectType)
-		return
+	-- Buscamos el "teléfono rojo" (BindableFunction) en el script Animate del personaje.
+	local animateScript = character:FindFirstChild("Animate")
+	local playActionBindable = animateScript and animateScript:FindFirstChild("PlayActionAnimation")
+
+	if not playActionBindable then
+		warn("[AbilityFX] ¡CRÍTICO! No se encontró la BindableFunction 'PlayActionAnimation' en el script Animate de", character.Name, ". Las animaciones de habilidad no funcionarán.")
 	end
+	
+	-- Procesamos cada acción definida en el blueprint.
+	for _, actionData in ipairs(effectBlueprint) do
+		local action = actionData.Action
+		local targetPart = actionData.Parent and character:FindFirstChild(actionData.Parent, true) or character.PrimaryPart
 
-	-- --- EJECUCIÓN DE ACCIONES (LÓGICA ORIGINAL) ---
-	local player = Players:GetPlayerFromCharacter(character) -- Mantenemos esto por si algún efecto lo necesita.
+		if not targetPart then
+			warn("[AbilityFX] No se encontró la targetPart:", tostring(actionData.Parent), "para la habilidad", abilityName)
+			continue
+		end
 
-	   for _, actionData in ipairs(effectBlueprint) do
-			   local action = actionData.Action
-			   local targetPart = actionData.Parent and character:FindFirstChild(actionData.Parent, true) or character.PrimaryPart
+		if action == "PlayAnimation" then
+			if playActionBindable then
+				-- Le damos la orden a la FSM de animaciones y ella se encarga del resto.
+				playActionBindable:Invoke(actionData.ID, actionData)
+			end
 
-			   if action == "PlayAnimation" then
-					   -- Si es una animación de STUN (DummyDive, efectoType == "Stun"), usar PlayActionAnimation para bloquear otras animaciones
-					   if effectType == "Stun" then
-							   print("[AbilityFXController] ▶ [STUN] Buscando Animate script en character:", character.Name)
-							   print("[AbilityFXController] ▶ [STUN] Character children:")
-							   for _, child in ipairs(character:GetChildren()) do
-								   print("[AbilityFXController] ▶ [STUN] -", child.Name, "(", child.ClassName, ")")
-							   end
-							   
-							   -- Intentar esperar a que el script Animate se cargue
-							   local animateScript = character:FindFirstChild("Animate")
-							   if not animateScript then
-								   print("[AbilityFXController] ▶ [STUN] Animate script no encontrado, esperando...")
-								   animateScript = character:WaitForChild("Animate", 5) -- Esperar hasta 5 segundos
-								   if animateScript then
-									   print("[AbilityFXController] ▶ [STUN] Animate script encontrado después de esperar")
-								   else
-									   warn("[AbilityFXController] ▶ [STUN] ¡FALLO! Animate script no encontrado después de esperar")
-									   return
-								   end
-							   end
-							   if animateScript then
-									   print("[AbilityFXController] ▶ [STUN] Animate script encontrado para:", character.Name)
-									   print("[AbilityFXController] ▶ [STUN] Animate script children:")
-									   for _, child in ipairs(animateScript:GetChildren()) do
-										   print("[AbilityFXController] ▶ [STUN] --", child.Name, "(", child.ClassName, ")")
-									   end
-									   
-									   local playActionFunc = animateScript:FindFirstChild("PlayActionAnimation")
-									   if playActionFunc and playActionFunc:IsA("BindableFunction") then
-											   print("[AbilityFXController] ▶ [STUN] Usando PlayActionAnimation para:", character.Name, actionData.ID)
-											   playActionFunc:Invoke(actionData.ID, actionData)
-									   else
-											   warn("[AbilityFXController] ▶ [STUN] ¡FALLO! No se encontró PlayActionAnimation BindableFunction para:", character.Name)
-									   end
-							   else
-									   warn("[AbilityFXController] ▶ [STUN] ¡FALLO! No se encontró Animate script para:", character.Name)
-							   end
-							   -- No reproducir ninguna otra animación mientras dura el stun
-					   else
-							   -- Animaciones normales
-							   local animateScript = character:FindFirstChild("Animate")
-							   if animateScript then
-									   local playActionFunc = animateScript:FindFirstChild("PlayActionAnimation")
-									   if playActionFunc and playActionFunc:IsA("BindableFunction") then
-											   print("[AbilityFXController] ▶ Enviando pausa a Animate para:", character.Name, actionData.ID)
-											   playActionFunc:Invoke(actionData.ID, actionData) 
-									   end
-							   end
-							   AnimationController:PlayAnimation(character, actionData.ID)
-					   end
-
-			   elseif action == "PlaySound" then
+		elseif action == "PlaySound" then
 			local sound = Instance.new("Sound", targetPart)
 			sound.SoundId = actionData.ID
 			sound.Looped = actionData.Looped or false
 			sound:Play()
-			if sound.Looped and player then
+
+			if sound.Looped and player and actionData.Name then
 				activePlayerEffects[player] = activePlayerEffects[player] or {}
 				activePlayerEffects[player][actionData.Name] = sound
 			else
-				game.Debris:AddItem(sound, 5)
+				game.Debris:AddItem(sound, 5) -- Limpieza automática para sonidos de un solo uso.
 			end
+
 		elseif action == "CreateVFX" then
 			local vfxTemplate = VFX_FOLDER:FindFirstChild(actionData.ID, true)
 			if vfxTemplate then
 				local vfxClone = vfxTemplate:Clone()
 				vfxClone.Parent = targetPart
 				if vfxClone:IsA("ParticleEmitter") then vfxClone.Enabled = true end
-				if actionData.Looped and player then
+
+				if actionData.Looped and player and actionData.Name then
 					activePlayerEffects[player] = activePlayerEffects[player] or {}
 					activePlayerEffects[player][actionData.Name] = vfxClone
 				else
-					game.Debris:AddItem(vfxClone, 10)
+					game.Debris:AddItem(vfxClone, 10) -- Limpieza automática.
 				end
 			end
+			
 		elseif action == "SwapModel" then
 			character = _swapCharacterModel(player, character, actionData.ModelName, actionData.Folder)
+
 		elseif action == "RevertModel" then
 			_revertCharacterModel(player)
+
 		elseif action == "StopEffects" then
-			if player and activePlayerEffects[player] then
-				for _, name in ipairs(actionData.Names) do
-					if activePlayerEffects[player][name] then
-						activePlayerEffects[player][name]:Destroy()
-						activePlayerEffects[player][name] = nil
+			if player and activePlayerEffects[player] and actionData.Names then
+				for _, nameToStop in ipairs(actionData.Names) do
+					if activePlayerEffects[player][nameToStop] then
+						activePlayerEffects[player][nameToStop]:Destroy()
+						activePlayerEffects[player][nameToStop] = nil
 					end
 				end
 			end
@@ -177,5 +157,5 @@ function AbilityFXController:ProcessEffectBlueprint(character, abilityName, effe
 	end
 end
 
-print("--- [AbilityFXController] SCRIPT CARGADO CON ÉXITO ---")
+print("[AbilityFXController] Módulo de efectos visuales cargado y listo.")
 return AbilityFXController

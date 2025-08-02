@@ -78,8 +78,6 @@ local function asignarPersonaje(player, rol)
 		humanoid.JumpPower = 0
 		humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
 	end
-	local animatorScript = ReplicatedStorage:FindFirstChild("CharacterAnimator")
-	if animatorScript then animatorScript:Clone().Parent = nuevoPersonaje end
 	player.Character = nuevoPersonaje
 	nuevoPersonaje.Parent = workspace
 	return nuevoPersonaje
