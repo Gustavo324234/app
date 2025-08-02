@@ -1,0 +1,47 @@
+# Nombre del workflow que verás en la pestaña "Actions" de GitHub
+name: 1. Combinar Scripts para IA
+
+# Esto permite que ejecutes el workflow manualmente desde GitHub
+on:
+  workflow_dispatch:
+
+jobs:
+  # Nombre del trabajo que se ejecutará
+  combine-lua-scripts:
+    # El trabajo se ejecutará en un servidor virtual con Ubuntu (Linux)
+    runs-on: ubuntu-latest
+
+    steps:
+      # Paso 1: Descargar el código de tu repositorio al servidor virtual.
+      # Es el primer paso estándar en casi todos los workflows.
+      - name: Descargar código del repositorio
+        uses: actions/checkout@v4
+
+      # Paso 2: Ejecutar el comando para buscar y combinar los archivos.
+      # Este es el corazón de la automatización.
+      - name: Combinar todos los archivos .lua en un .txt
+        run: |
+          echo "Iniciando la combinación de archivos desde la carpeta 'src'..."
+          
+          # Nos movemos a la carpeta 'src' donde está todo tu código fuente.
+          cd src
+          
+          # Usamos 'find' para buscar todos los .lua y los combinamos en un archivo
+          # que se creará en la carpeta raíz del proyecto (fuera de 'src').
+          find . -name "*.lua" -print0 | while IFS= read -r -d $'\0' file; do
+            echo "--- START OF FILE ${file#./} ---" >> "../Codigo-todo-junto.txt"
+            cat "$file" >> "../Codigo-todo-junto.txt"
+            echo "" >> "../Codigo-todo-junto.txt" # Añade una línea en blanco para mejor legibilidad
+          done
+          
+          echo "¡Combinación completada con éxito!"
+
+      # Paso 3: Subir el archivo .txt generado como un "artefacto".
+      # Un artefacto es un archivo que puedes descargar una vez que el workflow termina.
+      - name: Subir el archivo .txt combinado como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          # El nombre que tendrá el paquete descargable.
+          name: Codigo-Combinado
+          # La ruta al archivo que queremos subir.
+          path: Codigo-todo-junto.txt
