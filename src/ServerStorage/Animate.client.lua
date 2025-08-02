@@ -11,7 +11,11 @@ local pose = "Standing"
 local actionAnimPlaying = false
 ------------------------------------
 local animator = if Humanoid then Humanoid:FindFirstChildOfClass("Animator") else nil
-
+-- [[ INICIO DEL CÓDIGO A AÑADIR ]] --
+local Players = game:GetService("Players")
+local ClientModules = Players.LocalPlayer.PlayerScripts:WaitForChild("ClientModules")
+local MovementController = require(ClientModules.MovementController)
+-- [[ FIN DEL CÓDIGO A AÑADIR ]] --
 
 
 -- BindableFunction para que AbilityFXController invoque animaciones
@@ -675,11 +679,20 @@ end
 local lastTick = 0
 
 function stepAnimate(currentTime)
+	-- [[ INICIO DEL CÓDIGO A AÑADIR ]] --
+	-- =============================================================================================
+	-- ==        [[ ESTA ES LA IMPLEMENTACIÓN DE TU ARQUITECTURA ]]        ==
+	-- =============================================================================================
+	-- Al principio del bucle de actualización, consultamos la fuente de verdad.
+	if MovementController:IsStunned() or actionAnimPlaying then
+	return 
+end
+	-- =============================================================================================
+-- [[ FIN DEL CÓDIGO A AÑADIR ]] --
 	-- =============================================================================================
 	-- ==                      [[ SECCIÓN 2: AÑADIR ESTA COMPROBACIÓN AQUÍ ]]                       ==
 	-- =============================================================================================
 	-- Si una animación de acción se está reproduciendo, nos saltamos toda la lógica de este bucle.
-	if MovementController:IsStunned() then return end
 	if actionAnimPlaying then return end
 	-- =============================================================================================
 	-- ==                               [[ FIN DE LA SECCIÓN 2 ]]                                 ==

@@ -23,15 +23,15 @@ local ToggleLobbyUIEvent = RemoteEvents:WaitForChild("ToggleLobbyUI")
 local AnnounceMessage = RemoteEvents:WaitForChild("AnnounceMessage")
 local PlayerDiedEvent = RemoteEvents:WaitForChild("PlayerDied")
 local ExitSpectatorModeEvent = RemoteEvents:WaitForChild("ExitSpectatorMode")
+local RequestReturnToLobbyEvent = RemoteEvents:WaitForChild("RequestReturnToLobby")
 
 local RoundHandler = {}
 
 -- Configuración
-local ROUND_DURATION = 20 -- Duración de la ronda en segundos
-local INTERMISSION_DURATION = 15 -- Duración de la intermisión en segundos
-local ROUND_START_DELAY = 5 -- Tiempo de espera antes de iniciar la ronda
-local LOADING_SCREEN_DURATION = 10 -- Duración de la pantalla de carga en segundos
-local STATS_SCREEN_DURATION = 20 -- Duración de la pantalla de estadísticas en segundos
+local ROUND_DURATION = 20
+local INTERMISSION_DURATION = 15
+local LOADING_SCREEN_DURATION = 10
+local STATS_SCREEN_DURATION = 20
 local currentMap = nil
 local roundActive = false
 
@@ -47,7 +47,32 @@ local function cleanupMap()
 		end
 	end
 end
+local function onPlayerRequestReturnToLobby(player)
+    -- Verificación de seguridad: ¿el jugador existe?
+    if not player or not player.Parent then return end
 
+    -- Verificación de estado: ¿El jugador está realmente muerto o inactivo en la ronda?
+    -- Usamos `IsEntityAlive` del PlayerManager. Si NO está vivo, puede volver al lobby.
+    if not PlayerManager.IsEntityAlive(player) then
+        print(string.format("[RoundHandler] El jugador %s (muerto) ha vuelto al lobby.", player.Name))
+
+        -- 1. Quitar sus habilidades por si acaso (buena práctica de limpieza).
+        AbilityHandler.RemoveAbilities(player)
+        
+        -- 2. Mostrar la UI del Lobby para ESE jugador.
+        ToggleLobbyUIEvent:FireClient(player, true)
+        
+        -- 3. Indicarle a ESE cliente que salga del modo espectador y devuelva su cámara.
+        ExitSpectatorModeEvent:FireClient(player)
+        
+        -- 4. Devolver su personaje al estado normal del lobby.
+        -- No es necesario cambiar CharacterAutoLoads aquí, ya que la ronda sigue para otros.
+        player:LoadCharacter() -- Esto le dará un nuevo personaje en el lobby.
+        player.InLobby.Value = true
+    else
+        warn(string.format("[RoundHandler] El jugador %s intentó volver al lobby pero todavía está vivo. Petición ignorada.", player.Name))
+    end
+end
 -- Función privada para ejecutar una ronda completa
 function RoundHandler:startRound(playersInRound, realPlayers)
 	roundActive = true
@@ -158,8 +183,17 @@ function RoundHandler:startRound(playersInRound, realPlayers)
 	RewardManager.GiveRewards(killer, survivors, killerWon)
 	PlayerManager.AwardSurvivorBeats(survivors)
 
-	local statsText = killerWon and "¡El asesino ganó!" or "¡Los sobrevivientes ganaron!"
-	ShowRoundStatsScreenEvent:FireAllClients(statsText)
+	-- Crear un resumen de la ronda
+	local roundResultText = killerWon and "¡El Asesino ha ganado!" or "¡Los Sobrevivientes escapan!"
+	local summaryData = {
+		title = roundResultText,
+		killerName = (killer and killer.Name) or "Bot Asesino",
+		survivorsAlive = PlayerManager.GetSurvivorsAliveCount and PlayerManager.GetSurvivorsAliveCount() or 0, -- Suponiendo que tienes esta función
+		totalSurvivors = #survivors
+	}
+
+	-- Disparamos el evento con la tabla de datos
+	ShowRoundStatsScreenEvent:FireAllClients(summaryData)
 	task.wait(STATS_SCREEN_DURATION)
 	HideRoundStatsScreenEvent:FireAllClients()
 
@@ -179,6 +213,7 @@ function RoundHandler:startRound(playersInRound, realPlayers)
 	PlayerManager.ReturnPlayersToLobby(realPlayers)
 	roundActive = false
 end
+
 -- La única función pública que el GameManager llamará
 function RoundHandler.StartGameLoop()
 	print("[RoundHandler] Iniciando bucle de juego...")

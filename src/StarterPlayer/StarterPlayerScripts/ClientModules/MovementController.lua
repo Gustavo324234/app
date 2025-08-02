@@ -1,4 +1,4 @@
--- StarterPlayer/StarterPlayerScripts/ClientModules/MovementController.lua (VERSIÓN CORREGIDA Y ROBUSTA)
+-- StarterPlayer/StarterPlayerScripts/ClientModules/MovementController.lua (VERSIÓN FINAL Y COMPLETA)
 
 -- --- SERVICIOS ---
 local Players = game:GetService("Players")
@@ -28,39 +28,28 @@ local isStunned = false
 -- --- LÓGICA PRINCIPAL ---
 
 local function onHeartbeat(deltaTime)
-	-- Guardia de seguridad principal: no hacer nada si no hay un humanoide válido.
 	if not (humanoid and humanoid.Health > 0) then return end
 
-	-- El stun tiene la máxima prioridad.
 	if isStunned then
 		humanoid.WalkSpeed = 0
 		return
 	end
-
+    
 	local isMoving = humanoid.MoveDirection.Magnitude > 0.1
-
 	if isSprinting and isMoving and currentStamina > 0 and not character:GetAttribute("IsSlowedByGrease") then
 		humanoid.WalkSpeed = SPRINT_SPEED
 		currentStamina = math.max(0, currentStamina - STAMINA_CONSUMPTION_RATE * deltaTime)
 	else
-		-- --- LÓGICA CORREGIDA Y SIMPLIFICADA ---
-		local baseSpeed = NORMAL_SPEED -- Empezamos con la velocidad normal por defecto.
+		local baseSpeed = NORMAL_SPEED
 		local role = player:GetAttribute("Rol")
-
 		if role then 
 			local charName = player:GetAttribute("Personaje" .. role)
-			
-			-- Intentamos obtener la velocidad específica del personaje del diccionario.
-			-- Si alguna parte de la ruta no existe, la expresión devolverá 'nil'.
 			local characterSpecificSpeed = characterConfig[role] and characterConfig[role][charName] and characterConfig[role][charName].WalkSpeed
-
-			-- Si encontramos una velocidad específica, la usamos. Si no, baseSpeed mantiene su valor por defecto.
 			if characterSpecificSpeed then
 				baseSpeed = characterSpecificSpeed
 			end
 		end
-		
-		humanoid.WalkSpeed = baseSpeed -- Esta línea ahora es segura porque baseSpeed siempre es un número.
+		humanoid.WalkSpeed = baseSpeed
 		currentStamina = math.min(maxStamina, currentStamina + STAMINA_REGEN_RATE * deltaTime)
 	end
 end
@@ -71,15 +60,6 @@ function MovementController:ApplyLocalStun(duration)
 	isStunned = true
 	task.delay(duration, function()
 		isStunned = false
-		if character and character.Parent then -- Añadida comprobación de seguridad
-			local animateScript = character:FindFirstChild("Animate")
-			if animateScript then
-				local stopActionFunc = animateScript:FindFirstChild("StopActionAnimation")
-				if stopActionFunc and stopActionFunc:IsA("BindableFunction") then
-					stopActionFunc:Invoke()
-				end
-			end
-		end
 	end)
 end
 
@@ -98,7 +78,6 @@ end
 function MovementController:InitializeCharacter(_character)
 	character = _character
 	humanoid = character:WaitForChild("Humanoid")
-
 	local maxStaminaValue = humanoid:FindFirstChild("MaxStamina")
 	if not maxStaminaValue then
 		maxStamina = 100

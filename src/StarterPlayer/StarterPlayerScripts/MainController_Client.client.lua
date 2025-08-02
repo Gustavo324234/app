@@ -27,7 +27,7 @@ local MovementController = require(ClientModules.MovementController)
 local AbilityController = require(ClientModules.AbilityController)
 local AnimationController = require(ClientModules.AnimationController)
 local AbilityFXController = require(ClientModules.AbilityFXController)
-
+local LobbyController = require(ClientModules.UIModules.LobbyController)
 -- Módulos de UI (Importante: estos módulos esperan que las GUIs ya existan en PlayerGui)
 local UIController = require(ClientModules.UIController)
 local GameScreens = require(ClientModules.UIModules.GameScreens)
@@ -102,7 +102,7 @@ local function initializeGuiReferences()
 	
 	-- Inicializar UIController con todas las referencias
 	UIController:Initialize(uiReferences)
-
+ 	LobbyController:Initialize(uiReferences.LobbyUI)
 	-- Conexión de feedback a los botones (si existen)
 	if uiReferences.SprintButton then applyPressTransparency(uiReferences.SprintButton) end
 	if uiReferences.AttackButton then applyPressTransparency(uiReferences.AttackButton) end
@@ -158,11 +158,19 @@ InputController:Initialize(MovementController)
 AbilityController:Initialize()
 
 
--- Conexiones a eventos remotos (se hacen una sola vez, usan WaitForChild para seguridad)
+-- [[ CAMBIO ]] La lógica de ApplyState ahora está centralizada aquí.
 RemoteEvents:WaitForChild("ApplyState").OnClientEvent:Connect(function(state, duration)
 	if state == "Stunned" then
+		-- Orden del servidor: Poner al jugador en estado de stun.
 		MovementController:ApplyLocalStun(duration)
+		
 	elseif state == "Unstunned" then
+		-- Orden del servidor: Quitar el estado de stun.
+		
+		-- 1. Actualizamos el estado de movimiento.
+		MovementController:RemoveLocalStun()
+		
+		-- 2. Detenemos la animación de stun.
 		if player.Character then
 			local animateScript = player.Character:FindFirstChild("Animate")
 			if animateScript then
@@ -195,7 +203,11 @@ end)
 RemoteEvents:WaitForChild("ShowMessage").OnClientEvent:Connect(function(message, duration) if hasGuiBeenInitialized then UIController:ShowAnnouncement(message, duration) end end)
 RemoteEvents:WaitForChild("ShowLoadingScreen").OnClientEvent:Connect(function(killerName) GameScreens.ShowLoadingScreen(killerName or "?") end)
 RemoteEvents:WaitForChild("HideLoadingScreen").OnClientEvent:Connect(function() GameScreens.HideLoadingScreen() end)
-RemoteEvents:WaitForChild("ShowRoundStatsScreen").OnClientEvent:Connect(function(statsText) GameScreens.ShowRoundStatsScreen(statsText or "", function() RemoteEvents:WaitForChild("ToggleLobbyUI"):FireServer(true) end) end)
+RemoteEvents:WaitForChild("ShowRoundStatsScreen").OnClientEvent:Connect(function(summaryData)
+    GameScreens.ShowRoundStatsScreen(summaryData, function() 
+        print("Pantalla de estadísticas cerrada manualmente.")
+    end) 
+end)
 RemoteEvents:WaitForChild("HideRoundStatsScreen").OnClientEvent:Connect(function() GameScreens.HideRoundStatsScreen() end)
 RemoteEvents:WaitForChild("PlayerAttack").OnClientEvent:Connect(function(animationName)
 	if player.Character then AnimationController:PlayAnimation(player.Character, animationName) end
